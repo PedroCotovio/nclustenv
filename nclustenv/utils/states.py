@@ -1,6 +1,7 @@
 
 import nclustgen
 
+# TODO implement add, remove, cluster, generate
 
 class State:
 
@@ -12,31 +13,61 @@ class State:
     def shape(self):
 
         """
-        Returns the shape of current state.
+        Returns the state's shape.
 
         Returns
         -------
 
             list
                 Shape of current state.
+
         """
         return self.generator.X.shape
 
     @property
-    def cluster_index(self):
-        pass
-
-    @property
     def cluster(self):
-        pass
 
-    @property
-    def current(self):
-        return self.generator.graph
+        """
+        Returns the current found clusters index (Desired goal).
+
+        Returns
+        -------
+
+            list
+                Found clusters.
+
+        """
+        pass
 
     @property
     def hclusters(self):
+        """
+        Returns hidden clusters index (Goal).
+
+        Returns
+        -------
+
+            list
+                Hidden clusters.
+
+        """
+
         return self.generator.Y
+
+    @property
+    def current(self):
+
+        """
+        Returns the current state.
+
+        Returns
+        -------
+
+            dgl graph
+                Current state.
+
+        """
+        return self.generator.graph
 
     def add(self, param):
         pass
@@ -45,9 +76,6 @@ class State:
         pass
 
     def generate(self):
-        """
-
-        """
         pass
 
 
