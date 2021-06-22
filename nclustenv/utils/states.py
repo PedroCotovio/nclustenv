@@ -1,13 +1,12 @@
 
-
-class BaseState:
-
-    def __init__(self, ):
-
-        # Init
-        self.generator = None
+import nclustgen
 
 
+class State:
+
+    def __init__(self, generator='BiclusterGenerator'):
+
+        self.generator = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
 
     @property
     def shape(self):
@@ -21,7 +20,7 @@ class BaseState:
             list
                 Shape of current state.
         """
-        pass
+        return self.generator.X.shape
 
     @property
     def cluster_index(self):
@@ -32,7 +31,7 @@ class BaseState:
         pass
 
     @property
-    def state(self):
+    def current(self):
         return self.generator.graph
 
     @property
@@ -40,12 +39,16 @@ class BaseState:
         return self.generator.Y
 
     def add(self, param):
-
-        self.steps += 1
+        pass
 
     def remove(self, param):
+        pass
 
-        self.steps += 1
+    def generate(self):
+        """
+
+        """
+        pass
 
 
 
