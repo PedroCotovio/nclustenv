@@ -10,8 +10,6 @@ from gym.utils import seeding
 from ..utils.actions import Action
 from ..utils import metrics
 
-# TODO implement parse params, reset
-
 
 class BaseEnv(gym.Env, ABC):
 
@@ -21,17 +19,39 @@ class BaseEnv(gym.Env, ABC):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, smax, smin, clusters, noise, missings, seed=None,
-                 metric='match_score_1_n', max_steps=200, error_margin=0.05, penalty=0.001):
+    def __init__(
+            self,
+            shape,
+            clusters=None,
+            dataset_settings=None,
+            seed=None,
+            metric='match_score_1_n',
+            max_steps=200,
+            error_margin=0.05,
+            penalty=0.001
+    ):
 
         super(BaseEnv, self).__init__()
 
         # Environment attributes
 
+        if clusters is None:
+            clusters = [1, 1]
+
+        if dataset_settings is None:
+            dataset_settings = {}
+
+        # Enforce fixed settings
+        dataset_settings['silence'] = True
+        dataset_settings['in_memory'] = True
+
+        self._clusters = clusters
+        self.dataset_settings = dataset_settings
+
         if isinstance(metric, str):
-            self.metric = getattr(metrics, metric)
+            self._metric = getattr(metrics, metric)
         else:
-            self.metric = metric
+            self._metric = metric
 
         self.max_steps = max_steps
         self.target = 1.0 - error_margin
@@ -39,16 +59,17 @@ class BaseEnv(gym.Env, ABC):
 
         self.action_space = spaces.Tuple((spaces.Discrete(2),
                                           spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
-        self.observation_space = spaces.Box(low=np.array(smin), high=np.array(smax), dtype=np.int32)
+        self.observation_space = spaces.Box(low=np.array(shape[0]), high=np.array(shape[1]), dtype=np.int32)
 
         # Init
 
+        self._last_distances = None
+        self._current_step = None
+        self._steps_beyond_done = None
+        self._done = None
+
         self.np_random = None
         self.state = None
-        self.last_distances = None
-        self.current_step = None
-        self.steps_beyond_done = None
-        self.done = None
 
         self.seed(seed)
 
@@ -83,44 +104,44 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        if not self.done:
-            self.current_step += 1
+        if not self._done:
+            self._current_step += 1
             action_ = Action(*action)
 
             # Take action
             getattr(self.state, action_.action)(action_.parameter)
 
             # calculate
-            self.last_distances.pop(0)
-            self.last_distances.append(self.volume_match)
+            self._last_distances.pop(0)
+            self._last_distances.append(self.volume_match)
 
             # check state
 
-            if self.last_distances[-1] == 1.0:
-                reward = self.get_reward(self.last_distances, True)
-                self.done = True
-            elif mean(self.last_distances) >= self.target:
-                reward = self.get_reward(self.last_distances, True, True)
-                self.done = True
-            elif self.current_step > self.max_steps:
+            if self._last_distances[-1] == 1.0:
+                reward = self.get_reward(self._last_distances, True)
+                self._done = True
+            elif mean(self._last_distances) >= self.target:
+                reward = self.get_reward(self._last_distances, True, True)
+                self._done = True
+            elif self._current_step > self.max_steps:
                 reward = -1.0
-                self.done = True
+                self._done = True
             else:
-                reward = self.get_reward(self.last_distances)
+                reward = self.get_reward(self._last_distances)
 
         else:
-            if self.steps_beyond_done == 0:
+            if self._steps_beyond_done == 0:
                 logger.warn(
                     "You are calling 'step()' even though this "
-                    "environment has already returned done = True. You "
-                    "should always call 'reset()' once you receive 'done = "
+                    "environment has already returned _done = True. You "
+                    "should always call 'reset()' once you receive '_done = "
                     "True' -- any further steps are undefined behavior."
                 )
 
-            self.steps_beyond_done += 1
+            self._steps_beyond_done += 1
             reward = 0.0
 
-        return self.state.current, reward, self.done, {}
+        return self.state.current, reward, self._done, {}
 
     def get_reward(self, last_distances, goal=False, error=False):
 
@@ -151,7 +172,7 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return float(self.metric(self.state.shape, self.state.cluster, self.state.hclusters))
+        return float(self._metric(self.state.shape, self.state.cluster, self.state.hclusters))
 
     @property
     def best_match(self):
@@ -159,10 +180,28 @@ class BaseEnv(gym.Env, ABC):
 
     def reset(self):
 
-        self.current_step = 0
-        self.steps_beyond_done = 0
-        self.last_distances = [0.0, 0.0, 0.0]
-        self.done = False
+        # reset loggers
+        self._current_step = 0
+        self._steps_beyond_done = 0
+        self._last_distances = [0.0, 0.0, 0.0]
+        self._done = False
+
+        # reset seed
+        self.dataset_settings['seed'] = self.np_random.randint(low=1, high=10 ** 9, dtype=np.int32)
+
+        # define shape
+        try:
+            shape = self.np_random.randint(low=self.observation_space.low, high=self.observation_space.high)
+        except ValueError:
+            shape = self.observation_space.low
+
+        # define nclusters
+        try:
+            nclusters = self.np_random.randint(*self._clusters)
+        except ValueError:
+            nclusters = self._clusters[0]
+
+        self.state.reset(shape=shape, nclusters=nclusters, settings=self.dataset_settings)
 
     @abc.abstractmethod
     def _render(self, index):
@@ -171,7 +210,7 @@ class BaseEnv(gym.Env, ABC):
     def render(self, mode='human'):
 
         prefix = ''
-        if not self.done:
+        if not self._done:
             prefix = '(Current) '
 
         print('{}Found cluster'.format(prefix))
