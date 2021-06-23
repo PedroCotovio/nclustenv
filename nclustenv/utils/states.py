@@ -1,14 +1,15 @@
 
 import nclustgen
 
-# TODO implement add, remove, cluster, generate
+# TODO implement add, remove, cluster
 
 
 class State:
 
     def __init__(self, generator='BiclusterGenerator'):
 
-        self.generator = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
+        self._cls = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
+        self._generator = None
 
     @property
     def shape(self):
@@ -23,7 +24,7 @@ class State:
                 Shape of current state.
 
         """
-        return self.generator.X.shape
+        return self._generator.X.shape
 
     @property
     def cluster(self):
@@ -53,7 +54,7 @@ class State:
 
         """
 
-        return self.generator.Y
+        return self._generator.Y
 
     @property
     def current(self):
@@ -69,7 +70,7 @@ class State:
 
         """
 
-        return self.generator.graph
+        return self._generator.graph
 
     @property
     def as_dense(self):
@@ -85,7 +86,7 @@ class State:
 
         """
 
-        return self.generator.X
+        return self._generator.X
 
     def add(self, param):
         pass
@@ -93,8 +94,14 @@ class State:
     def remove(self, param):
         pass
 
-    def generate(self):
-        pass
+    def reset(self, shape, nclusters, settings=None):
+
+        if settings is None:
+            settings = {}
+
+        self._generator = self._cls(**settings)
+
+        self._generator.generate(*shape, nclusters=nclusters)
 
 
 
