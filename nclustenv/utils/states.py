@@ -3,6 +3,7 @@ import nclustgen
 
 # TODO implement add, remove, cluster, generate
 
+
 class State:
 
     def __init__(self, generator='BiclusterGenerator'):
@@ -67,7 +68,24 @@ class State:
                 Current state.
 
         """
+
         return self.generator.graph
+
+    @property
+    def as_dense(self):
+
+        """
+        Returns the current state as a dense array.
+
+        Returns
+        -------
+
+            numpy array
+                Current state as a dense array.
+
+        """
+
+        return self.generator.X
 
     def add(self, param):
         pass

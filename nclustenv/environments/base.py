@@ -1,3 +1,4 @@
+import abc
 from abc import ABC
 from statistics import mean
 import numpy as np
@@ -9,7 +10,7 @@ from gym.utils import seeding
 from ..utils.actions import Action
 from ..utils import metrics
 
-# TODO implement render(bic/tric), parse params, reset
+# TODO implement parse params, reset
 
 
 class BaseEnv(gym.Env, ABC):
@@ -152,6 +153,10 @@ class BaseEnv(gym.Env, ABC):
 
         return float(self.metric(self.state.shape, self.state.cluster, self.state.hclusters))
 
+    @property
+    def best_match(self):
+        pass
+
     def reset(self):
 
         self.current_step = 0
@@ -159,6 +164,20 @@ class BaseEnv(gym.Env, ABC):
         self.last_distances = [0.0, 0.0, 0.0]
         self.done = False
 
-    def _render(self):
-
+    @abc.abstractmethod
+    def _render(self, index):
         pass
+
+    def render(self, mode='human'):
+
+        prefix = ''
+        if not self.done:
+            prefix = '(Current) '
+
+        print('{}Found cluster'.format(prefix))
+        self._render(self.state.cluster)
+        print('')
+
+        print('{}Best matched hidden cluster [from {} hidden clusters]'.format(prefix, len(self.state.hclusters)))
+        self._render(self.best_match)
+
