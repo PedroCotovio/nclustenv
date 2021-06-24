@@ -10,10 +10,12 @@ def index_to_tensor(x, cluster):
     return [index_to_matrix(x[ctx], cluster[:2]) for ctx in cluster[2]]
 
 
+# TODO correct string
+# If cluster not array (ax have different len) it does not render as expected
 def matrix_to_string(matrix, index=None, title=''):
 
     if index:
-        matrix = [[title] + index[0]] + [[index[1][i]] + vec for i, vec in enumerate(matrix.tolist())]
+        matrix = [[title] + index[0]] + [[index[1][i]] + vec for i, vec in enumerate(matrix)]
 
     return '\n'.join([''.join(['{:10}'.format(item) for item in row]) for row in matrix])
 
