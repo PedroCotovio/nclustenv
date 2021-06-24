@@ -179,12 +179,12 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return float(self._metric(self.state.shape, self.state.cluster, self.state.hclusters))
+        return min(self._metric(self.state.cluster, self.state.hclusters))
 
-    # TODO implement best match
     @property
     def best_match(self):
-        return 0
+        matches = self._metric(self.state.cluster, self.state.hclusters)
+        return matches.index(min(matches))
 
     def reset(self):
 
