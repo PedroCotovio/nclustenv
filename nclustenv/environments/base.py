@@ -7,7 +7,7 @@ import gym
 from gym import spaces, logger
 from gym.utils import seeding
 
-from ..utils.actions import Action
+from ..utils import actions
 from ..utils import metrics
 
 
@@ -26,6 +26,7 @@ class BaseEnv(gym.Env, ABC):
             dataset_settings=None,
             seed=None,
             metric='match_score_1_n',
+            action='Action',
             max_steps=200,
             error_margin=0.05,
             penalty=0.001
@@ -48,10 +49,17 @@ class BaseEnv(gym.Env, ABC):
         self._clusters = clusters
         self.dataset_settings = dataset_settings
 
+        # metric pointer
         if isinstance(metric, str):
             self._metric = getattr(metrics, metric)
         else:
             self._metric = metric
+
+        # action pointer
+        if isinstance(action, str):
+            self._action = getattr(actions, action)
+        else:
+            self._action = action
 
         self.max_steps = max_steps
         self.target = 1.0 - error_margin
@@ -106,10 +114,10 @@ class BaseEnv(gym.Env, ABC):
 
         if not self._done:
             self._current_step += 1
-            action_ = Action(*action)
+            action_ = self._action(*action)
 
             # Take action
-            getattr(self.state, action_.action)(action_.parameter)
+            getattr(self.state, action_.action)(action_.ntype, action_.parameter)
 
             # calculate
             self._last_distances.pop(0)
