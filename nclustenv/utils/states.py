@@ -1,8 +1,6 @@
 
 import nclustgen
 
-# TODO implement add, remove, cluster
-
 
 class State:
 
@@ -10,6 +8,7 @@ class State:
 
         self._cls = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
         self._generator = None
+        self._ntypes = None
 
     @property
     def shape(self):
@@ -39,7 +38,9 @@ class State:
                 Found clusters.
 
         """
-        pass
+
+        return [[i for i, val in enumerate(self.current.nodes[ntype].data['c']) if val == 1]
+                for ntype in self._ntypes]
 
     @property
     def hclusters(self):
@@ -88,20 +89,35 @@ class State:
 
         return self._generator.X
 
-    def add(self, param):
-        pass
+    def _set_node(self, x, ntype, param):
 
-    def remove(self, param):
-        pass
+        # parese ntype index to string
+        ntype = self._ntypes[ntype]
+        # parse param into node index
+        index = int(param * len(self.current.nodes(ntype)))
+        # set value on node data
+        self.current.nodes[ntype].data['c'][index] = x
+
+    def add(self, ntype, param):
+        self._set_node(1, ntype, param)
+
+    def remove(self, ntype, param):
+        self._set_node(0, ntype, param)
 
     def reset(self, shape, nclusters, settings=None):
 
         if settings is None:
             settings = {}
 
+        # generate
         self._generator = self._cls(**settings)
-
         self._generator.generate(*shape, nclusters=nclusters)
+        self._generator.to_graph(framework='dgl', device='gpu')
+
+        # update ntype
+        self._ntypes = [ntypes for ntypes in self.current.ntypes]
+        self._ntypes.insert(0, self._ntypes.pop())
+
 
 
 
