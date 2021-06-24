@@ -1,14 +1,13 @@
-import numpy as np
 
 
 def index_to_matrix(x, cluster):
 
-    return np.array([[x[row][col] for col in cluster[1]] for row in cluster[0]])
+    return [[x[row][col] for col in cluster[1]] for row in cluster[0]]
 
 
 def index_to_tensor(x, cluster):
 
-    return np.array([index_to_matrix(x[ctx], cluster[:2]) for ctx in cluster[2]])
+    return [index_to_matrix(x[ctx], cluster[:2]) for ctx in cluster[2]]
 
 
 def matrix_to_string(matrix, index=None, title=''):

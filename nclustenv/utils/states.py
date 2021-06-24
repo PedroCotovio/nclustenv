@@ -29,13 +29,13 @@ class State:
     def cluster(self):
 
         """
-        Returns the current found clusters index (Desired goal).
+        Returns the current found cluster's index (Desired goal).
 
         Returns
         -------
 
             list
-                Found clusters.
+                Found cluster.
 
         """
 
