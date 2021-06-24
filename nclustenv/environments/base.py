@@ -65,8 +65,7 @@ class BaseEnv(gym.Env, ABC):
         self.target = 1.0 - error_margin
         self.penalty = penalty
 
-        self.action_space = spaces.Tuple((spaces.Discrete(2),
-                                          spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
+        self.action_space = None
         self.observation_space = spaces.Box(low=np.array(shape[0]), high=np.array(shape[1]), dtype=np.int32)
 
         # Init

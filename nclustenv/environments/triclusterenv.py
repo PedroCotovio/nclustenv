@@ -3,6 +3,9 @@ from .base import BaseEnv
 from ..utils.states import State
 from ..utils.helper import tensor_to_string, index_to_tensor
 
+from gym import spaces
+import numpy as np
+
 
 class TriclusterEnv(BaseEnv):
 
@@ -13,6 +16,7 @@ class TriclusterEnv(BaseEnv):
             dataset_settings=None,
             seed=None,
             metric='match_score_1_n',
+            action='Action',
             max_steps=200,
             error_margin=0.05,
             penalty=0.001
@@ -33,10 +37,15 @@ class TriclusterEnv(BaseEnv):
             dataset_settings=dataset_settings,
             seed=seed,
             metric=metric,
+            action=action,
             max_steps=max_steps,
             error_margin=error_margin,
             penalty=penalty
         )
+
+        self.action_space = spaces.Tuple((spaces.Discrete(2),
+                                          spaces.Discrete(3),
+                                          spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
 
         self.state = State(generator='TriclusterGenerator')
         self.reset()
