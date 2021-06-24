@@ -3,14 +3,14 @@ class Action:
     """"
     Action class to store the action for the environment.
     """
-    def __init__(self, id_, param, labels=['add', 'remove']):
+    def __init__(self, index, ntype, param, labels=None):
         """"
 
         Parameters
         ----------
 
-            id_: int
-                The id of the selected action.
+            index: int
+                The index of the selected action.
 
                 ======== ====================
                     Default Actions
@@ -20,14 +20,19 @@ class Action:
                 0        add
                 1        remove
 
-            param: float
+            param: list[float]
                 The parameter of an action.
 
                 **Range**: [0, 1]
 
         """
-        self.id = id_
-        self.parameter = param
+        if labels is None:
+            labels = ['add', 'remove']
+
+        self.index = index
+        self.ntype = ntype
+
+        self._parameter = param
         self._labels = labels
 
     @property
@@ -44,8 +49,9 @@ class Action:
 
         """
 
-        return '_{}'.format(self._labels[self.id])
+        return self._labels[self.index]
 
+    # TODO Confirm type of continuous param output
     @property
     def parameter(self):
         """"
@@ -58,9 +64,12 @@ class Action:
                 The parameter related to this action.
 
         """
-        if len(self.parameter) == len(self._labels):
-            res = self.parameter[self.id]
-        else:
-            res = self.parameter[0]
+        try:
+            if len(self._parameter) > 1:
+                res = self._parameter[self.index][self.ntype]
+            else:
+                res = self._parameter[0]
+        except TypeError:
+            res = self._parameter
 
-        return float(max(min(res, 1), 0))
+        return float(max(min(res, 1.0), 0.0))
