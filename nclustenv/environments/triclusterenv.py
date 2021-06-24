@@ -42,4 +42,4 @@ class TriclusterEnv(BaseEnv):
         self.reset()
 
     def _render(self, index):
-        return print(tensor_to_string(index_to_tensor(self.state.as_dense, index), index))
+        print(tensor_to_string(index_to_tensor(self.state.as_dense, index), index))

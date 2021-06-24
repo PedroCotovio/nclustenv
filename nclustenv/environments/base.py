@@ -222,10 +222,15 @@ class BaseEnv(gym.Env, ABC):
         if not self._done:
             prefix = '(Current) '
 
-        print('{}Found cluster'.format(prefix))
-        self._render(self.state.cluster)
-        print('')
+        if 0 not in (len(ax) for ax in self.state.cluster):
 
-        print('{}Best matched hidden cluster [from {} hidden clusters]'.format(prefix, len(self.state.hclusters)))
-        self._render(self.best_match)
+            print('{}Found cluster'.format(prefix))
+            self._render(self.state.cluster)
+            print('')
+
+            print('{}Best matched hidden cluster [from {} hidden clusters]'.format(prefix, len(self.state.hclusters)))
+            self._render(self.state.hclusters[self.best_match])
+
+        else:
+            print('No cluster found yet..')
 

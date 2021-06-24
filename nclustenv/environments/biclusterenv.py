@@ -36,4 +36,4 @@ class BiclusterEnv(BaseEnv):
         self.reset()
 
     def _render(self, index):
-        return print(matrix_to_string(index_to_matrix(self.state.as_dense, index), index))
+        print(matrix_to_string(index_to_matrix(self.state.as_dense, index), index))
