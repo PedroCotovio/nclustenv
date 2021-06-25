@@ -58,6 +58,10 @@ class State:
         return self._generator.Y
 
     @property
+    def coverage(self):
+        return self._generator.coverage
+
+    @property
     def current(self):
 
         """
