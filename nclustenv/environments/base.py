@@ -10,7 +10,7 @@ from gym.utils import seeding
 from ..utils import actions
 from ..utils import metrics
 
-
+# TODO test & docs
 class BaseEnv(gym.Env, ABC):
 
     """
@@ -62,7 +62,7 @@ class BaseEnv(gym.Env, ABC):
             self._action = action
 
         self.max_steps = max_steps
-        self.target = 1.0 - error_margin
+        self.target = error_margin
         self.penalty = penalty
 
         self.action_space = None
@@ -118,16 +118,16 @@ class BaseEnv(gym.Env, ABC):
             # Take action
             getattr(self.state, action_.action)(action_.ntype, action_.parameter)
 
-            # calculate
+            # calculate volume match
             self._last_distances.pop(0)
-            self._last_distances.append(self.volume_match)
+            self._last_distances.append(1-self.volume_match)
 
             # check state
 
-            if self._last_distances[-1] == 1.0:
+            if self._last_distances[-1] == 0.0:
                 reward = self.get_reward(self._last_distances, True)
                 self._done = True
-            elif mean(self._last_distances) >= self.target:
+            elif mean(self._last_distances) <= self.target:
                 reward = self.get_reward(self._last_distances, True, True)
                 self._done = True
             elif self._current_step > self.max_steps:
@@ -191,7 +191,7 @@ class BaseEnv(gym.Env, ABC):
         # reset loggers
         self._current_step = 0
         self._steps_beyond_done = 0
-        self._last_distances = [0.0, 0.0, 0.0]
+        self._last_distances = [1.0, 1.0, 1.0]
         self._done = False
 
         # reset seed
