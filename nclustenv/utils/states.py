@@ -5,9 +5,33 @@ from .helper import loader
 
 class State:
 
+    """
+    State class to store current environment state.
+    """
+
     def __init__(self, generator='BiclusterGenerator'):
 
-        self._cls = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
+        """
+        Parameters
+        ----------
+
+        generator: str or class.
+            The name of a generator from the nclustgen tool, or the class for a personalised generator (not advised).
+
+        Attributes
+        ----------
+
+        _cls: class
+            The generator class for the state.
+
+        _generator: object
+            The generator object for the state.
+
+        _ntypes: list[str]
+            An ordered list of the axis labels.
+
+        """
+
         self._cls = loader(nclustgen, generator)
         self._generator = None
         self._ntypes = None
@@ -61,6 +85,18 @@ class State:
 
     @property
     def coverage(self):
+
+        """
+        Returns the current state hidden cluster coverage.
+
+        Returns
+        -------
+
+            float
+                Percentage of cluster coverage.
+
+        """
+
         return self._generator.coverage
 
     @property
@@ -97,20 +133,85 @@ class State:
 
     def _set_node(self, x, ntype, param):
 
-        # parese ntype index to string
-        ntype = self._ntypes[ntype]
-        # parse param into node index
-        index = int(param * len(self.current.nodes(ntype)))
-        # set value on node data
-        self.current.nodes[ntype].data['c'][index] = x
+        """
+        Sets the cluster value for given node.
+
+        Parameters
+        ----------
+
+        x: int
+            value to set [0, 1]
+
+        ntype: int
+            Index of node type.
+
+        param: float
+            Node to set [0, 1]
+
+        """
+
+        if x in [0, 1]:
+            # parse ntype index to string
+            ntype = self._ntypes[ntype]
+            # parse param into node index
+            index = int(param * len(self.current.nodes(ntype)))
+            # set value on node data
+            self.current.nodes[ntype].data['c'][index] = x
+
 
     def add(self, ntype, param):
+
+        """
+        Adds a given node to the cluster.
+
+        Parameters
+        ----------
+
+        ntype: int
+            Index of node type.
+
+        param: float
+            Node to set [0, 1]
+
+        """
+
         self._set_node(1, ntype, param)
 
     def remove(self, ntype, param):
+
+        """
+        Removes a given node from the cluster.
+
+        Parameters
+        ----------
+
+        ntype: int
+            Index of node type.
+
+        param: float
+            Node to set [0, 1]
+
+        """
+
         self._set_node(0, ntype, param)
 
     def reset(self, shape, nclusters, settings=None):
+
+        """
+        Resets the state (generates new state)
+
+        Parameters
+        ----------
+
+        shape: list[int]
+            Shape of new state.
+
+        nclusters: int
+            Number of hidden clusters.
+
+        settings: dict
+            Dataset settings (nclustgen).
+        """
 
         if settings is None:
             settings = {}
