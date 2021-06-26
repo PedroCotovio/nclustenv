@@ -29,3 +29,7 @@ def tensor_to_string(tensor, index=None):
         index = index[:2]
 
     return '\n\n'.join([matrix_to_string(ctx, index, title[i]) for i, ctx in enumerate(tensor)])
+
+
+def loader(module, cls):
+    return getattr(module, cls) if isinstance(cls, str) else cls

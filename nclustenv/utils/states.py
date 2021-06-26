@@ -1,5 +1,6 @@
 
 import nclustgen
+from .helper import loader
 
 
 class State:
@@ -7,6 +8,7 @@ class State:
     def __init__(self, generator='BiclusterGenerator'):
 
         self._cls = (getattr(nclustgen, generator) if isinstance(generator, str) else generator)
+        self._cls = loader(nclustgen, generator)
         self._generator = None
         self._ntypes = None
 

@@ -7,8 +7,8 @@ import gym
 from gym import spaces, logger
 from gym.utils import seeding
 
-from ..utils import actions
-from ..utils import metrics
+from ..utils import actions, metrics
+from ..utils.helper import loader
 
 # TODO test & docs
 class BaseEnv(gym.Env, ABC):
@@ -50,16 +50,10 @@ class BaseEnv(gym.Env, ABC):
         self.dataset_settings = dataset_settings
 
         # metric pointer
-        if isinstance(metric, str):
-            self._metric = getattr(metrics, metric)
-        else:
-            self._metric = metric
+        self._metric = loader(metric)
 
         # action pointer
-        if isinstance(action, str):
-            self._action = getattr(actions, action)
-        else:
-            self._action = action
+        self._action = loader(action)
 
         self.max_steps = max_steps
         self.target = error_margin

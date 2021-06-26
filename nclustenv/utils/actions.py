@@ -9,21 +9,21 @@ class Action:
         Parameters
         ----------
 
-            index: int
-                The index of the selected action.
+        index: int
+            The index of the selected action.
 
-                ======== ====================
-                    Default Actions
-                -----------------------------
-                index    action
-                ======== ====================
-                0        add
-                1        remove
+            ======== ====================
+                Default Actions
+            -----------------------------
+            index    action
+            ======== ====================
+            0        add
+            1        remove
 
-            param: list[float]
-                The parameter of an action.
+        param: list[float]
+            The parameter of an action.
 
-                **Range**: [0, 1]
+            **Range**: [0, 1]
 
         """
         if labels is None:
