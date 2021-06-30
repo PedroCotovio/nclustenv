@@ -211,6 +211,13 @@ class State:
 
         settings: dict
             Dataset settings (nclustgen).
+
+        Returns
+        -------
+
+            dgl graph
+                Current state.
+
         """
 
         if settings is None:
@@ -224,6 +231,8 @@ class State:
         # update ntype
         self._ntypes = [ntypes for ntypes in self.current.ntypes]
         self._ntypes.insert(0, self._ntypes.pop())
+
+        return self.current
 
 
 

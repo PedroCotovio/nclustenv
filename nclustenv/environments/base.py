@@ -203,7 +203,7 @@ class BaseEnv(gym.Env, ABC):
         except ValueError:
             nclusters = self._clusters[0]
 
-        self.state.reset(shape=shape, nclusters=nclusters, settings=self.dataset_settings)
+        return self.state.reset(shape=shape, nclusters=nclusters, settings=self.dataset_settings)
 
     @abc.abstractmethod
     def _render(self, index):
