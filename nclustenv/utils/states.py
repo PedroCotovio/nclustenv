@@ -23,10 +23,8 @@ class State:
 
         _cls: class
             The generator class for the state.
-
         _generator: object
             The generator object for the state.
-
         _ntypes: list[str]
             An ordered list of the axis labels.
 
@@ -65,7 +63,7 @@ class State:
 
         """
 
-        return [[i for i, val in enumerate(self.current.nodes[ntype].data['c']) if val == 1]
+        return [[i for i, val in enumerate(self.current.nodes[ntype].data[0]) if val == 1]
                 for ntype in self._ntypes]
 
     @property
@@ -141,10 +139,8 @@ class State:
 
         x: int
             value to set [0, 1]
-
         ntype: int
             Index of node type.
-
         param: float
             Node to set [0, 1]
 
@@ -156,8 +152,7 @@ class State:
             # parse param into node index
             index = int(param * len(self.current.nodes(ntype)))
             # set value on node data
-            self.current.nodes[ntype].data['c'][index] = x
-
+            self.current.nodes[ntype].data[0][index] = x
 
     def add(self, ntype, param):
 
@@ -169,7 +164,6 @@ class State:
 
         ntype: int
             Index of node type.
-
         param: float
             Node to set [0, 1]
 
@@ -187,7 +181,6 @@ class State:
 
         ntype: int
             Index of node type.
-
         param: float
             Node to set [0, 1]
 
@@ -205,10 +198,8 @@ class State:
 
         shape: list[int]
             Shape of new state.
-
         nclusters: int
             Number of hidden clusters.
-
         settings: dict
             Dataset settings (nclustgen).
 

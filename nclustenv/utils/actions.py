@@ -12,13 +12,14 @@ class Action:
         index: int
             The index of the selected action.
 
-            ======== ====================
-                Default Actions
-            -----------------------------
+            ======== ===========
+              Default Actions
+            --------------------
             index    action
-            ======== ====================
+            ======== ===========
             0        add
             1        remove
+            ======== ===========
 
         param: list[float]
             The parameter of an action.
