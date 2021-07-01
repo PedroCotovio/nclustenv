@@ -209,16 +209,13 @@ class BaseEnv(gym.Env, ABC):
     def _render(self, index):
         pass
 
-    # TODO correct render
-    # If cluster not array (ax have different len) it does not render as expected
-
     def render(self, mode='human'):
 
         prefix = ''
         if not self._done:
             prefix = '(Current) '
 
-        if 0 not in (len(ax) for ax in self.state.cluster) and self.best_match is not None:
+        if 1 in (1 for ax in self.state.cluster if len(ax) > 0) and self.best_match is not None:
 
             print('{}Found cluster'.format(prefix))
             self._render(self.state.cluster)
@@ -229,4 +226,3 @@ class BaseEnv(gym.Env, ABC):
 
         else:
             print('No cluster found yet..')
-
