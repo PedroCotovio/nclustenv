@@ -52,7 +52,6 @@ class Action:
 
         return self._labels[self.index]
 
-    # TODO Confirm type of continuous param output
     @property
     def parameter(self):
         """"

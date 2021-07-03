@@ -1,16 +1,21 @@
 
+def index_to_matrix(x, index):
 
-def index_to_matrix(x, cluster):
+    """Returns a sub-matrix of `x` given by the `index`."""
 
-    return [[x[row][col] for col in cluster[1]] for row in cluster[0]]
+    return [[x[row][col] for col in index[1]] for row in index[0]]
 
 
-def index_to_tensor(x, cluster):
+def index_to_tensor(x, index):
 
-    return [index_to_matrix(x[ctx], cluster[:2]) for ctx in cluster[2]]
+    """Returns a sub-tensor of `x` given by the `index`."""
+
+    return [index_to_matrix(x[ctx], index[:2]) for ctx in index[2]]
 
 
 def matrix_to_string(matrix, index=None, title=''):
+
+    """Returns a matrix as a printable string"""
 
     if index:
         temp = [[title] + ['y{}'.format(i) for i in index[1]]]
@@ -30,6 +35,8 @@ def matrix_to_string(matrix, index=None, title=''):
 
 def tensor_to_string(tensor, index=None):
 
+    """Returns a tensor as a printable string"""
+
     title = ['' for _ in tensor]
 
     if index:
@@ -40,4 +47,7 @@ def tensor_to_string(tensor, index=None):
 
 
 def loader(module, cls):
+
+    """Loads a method from a pointer or a string"""
+
     return getattr(module, cls) if isinstance(cls, str) else cls
