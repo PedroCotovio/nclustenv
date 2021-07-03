@@ -9,6 +9,10 @@ import numpy as np
 
 class TriclusterEnv(BaseEnv):
 
+    """
+    This class provides an implementation of a three-dimensional gym environment with hidden triclusters.
+    """
+
     def __init__(
             self,
             shape=None,
