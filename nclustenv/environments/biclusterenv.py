@@ -9,6 +9,10 @@ import numpy as np
 
 class BiclusterEnv(BaseEnv):
 
+    """
+    This class provides an implementation of a two-dimensional gym environment with hidden biclusters.
+    """
+
     def __init__(
             self,
             shape=None,
