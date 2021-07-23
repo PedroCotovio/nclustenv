@@ -6,6 +6,7 @@ import numpy as np
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
+from scipy.optimize import linear_sum_assignment
 
 from ..utils import actions, metrics
 from ..utils.helper import loader
@@ -27,7 +28,7 @@ class BaseEnv(gym.Env, ABC):
             clusters=None,
             dataset_settings=None,
             seed=None,
-            metric='match_score_1_n',
+            metric='match_score',
             action='Action',
             max_steps=200,
             error_margin=0.05,
@@ -257,7 +258,12 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return min(self._metric(self.state.cluster, self.state.hclusters))
+        cost_matrix = self._metric(self.state.cluster, self.state.hclusters)
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+        extras = abs(len(self.state.cluster) - len(self.state.hclusters))
+
+        return cost_matrix[row_ind, col_ind].sum() + extras / len(self.state.cluster) + extras
 
     @property
     def best_match(self):
@@ -273,8 +279,7 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        matches = self._metric(self.state.cluster, self.state.hclusters)
-        return matches.index(min(matches))
+        return linear_sum_assignment(self._metric(self.state.cluster, self.state.hclusters))
 
     def reset(self):
 
