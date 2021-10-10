@@ -46,7 +46,7 @@ def tensor_to_string(tensor, index=None):
     return '\n\n'.join([matrix_to_string(ctx, index, title[i]) for i, ctx in enumerate(tensor)])
 
 
-def loader(module, cls):
+def loader(cls, module=None):
 
     """Loads a method from a pointer or a string"""
 

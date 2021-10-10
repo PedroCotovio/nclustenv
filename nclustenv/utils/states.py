@@ -30,7 +30,7 @@ class State:
 
         """
 
-        self._cls = loader(nclustgen, generator)
+        self._cls = loader(generator, nclustgen)
         self._generator = None
         self._ntypes = None
 

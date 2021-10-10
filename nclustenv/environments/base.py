@@ -114,10 +114,10 @@ class BaseEnv(gym.Env, ABC):
         self.dataset_settings = dataset_settings
 
         # metric pointer
-        self._metric = loader(metric)
+        self._metric = loader(metric, metrics)
 
         # action pointer
-        self._action = loader(action)
+        self._action = loader(action, actions)
 
         self.max_steps = max_steps
         self.target = error_margin
