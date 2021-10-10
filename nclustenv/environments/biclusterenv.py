@@ -16,10 +16,11 @@ class BiclusterEnv(BaseEnv):
     def __init__(
             self,
             shape=None,
+            n=None,
             clusters=None,
             dataset_settings=None,
             seed=None,
-            metric='match_score_1_n',
+            metric='match_score',
             action='Action',
             max_steps=200,
             error_margin=0.05,
@@ -49,7 +50,7 @@ class BiclusterEnv(BaseEnv):
                                           spaces.Discrete(2),
                                           spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
 
-        self.state = State(generator='BiclusterGenerator')
+        self.state = State(generator='BiclusterGenerator', n=n)
         self.reset()
 
     def _render(self, index):

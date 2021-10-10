@@ -16,10 +16,11 @@ class TriclusterEnv(BaseEnv):
     def __init__(
             self,
             shape=None,
+            n=None,
             clusters=None,
             dataset_settings=None,
             seed=None,
-            metric='match_score_1_n',
+            metric='match_score',
             action='Action',
             max_steps=200,
             error_margin=0.05,
@@ -42,6 +43,7 @@ class TriclusterEnv(BaseEnv):
 
         super(TriclusterEnv, self).__init__(
             shape=shape,
+            n=None,
             clusters=clusters,
             dataset_settings=dataset_settings,
             seed=seed,
@@ -56,7 +58,7 @@ class TriclusterEnv(BaseEnv):
                                           spaces.Discrete(3),
                                           spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
 
-        self.state = State(generator='TriclusterGenerator')
+        self.state = State(generator='TriclusterGenerator', n=n)
         self.reset()
 
     def _render(self, index):

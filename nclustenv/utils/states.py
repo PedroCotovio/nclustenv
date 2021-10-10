@@ -9,30 +9,38 @@ class State:
     State class to store current environment state.
     """
 
-    def __init__(self, generator='BiclusterGenerator'):
+    def __init__(self, generator='BiclusterGenerator', n=None):
 
         """
         Parameters
         ----------
 
-        generator: str or class.
+        generator: str or class, default BiclusterGenerator.
             The name of a generator from the nclustgen tool, or the class for a personalised generator (not advised).
+
+        n: int, default None
+            The number of clusters to find.
 
         Attributes
         ----------
 
-        _cls: class
-            The generator class for the state.
-        _generator: object
-            The generator object for the state.
-        _ntypes: list[str]
-            An ordered list of the axis labels.
+        n: int
+            The number of clusters to find.
+        defined: object
+            If the number of clusters to find is known
+        cluster_coverage: list[float]
+            An ordered list of with the percentage of coverage for every hidden cluster.
 
         """
 
         self._cls = loader(generator, nclustgen)
+        self.n = n
+        self.defined = n is not None
+
         self._generator = None
         self._ntypes = None
+
+        self.cluster_coverage = None
 
     @property
     def shape(self):
@@ -53,7 +61,7 @@ class State:
     def cluster(self):
 
         """
-        Returns the current found cluster's index (Desired goal).
+        Returns the current found cluster's index (Current solution).
 
         Returns
         -------
@@ -82,10 +90,55 @@ class State:
         return self._generator.Y
 
     @property
+    def hclusters_size(self):
+        """
+        Returns the size of the hidden clusters.
+
+        Returns
+        -------
+
+            list[int]
+                Ordered list hidden cluster sizes.
+
+        """
+
+        return [sum(map(len, cluster)) for cluster in self._generator.Y]
+
+    @property
+    def max_hclusters_size(self):
+
+        """
+        Returns the current state clusters max possible size.
+
+        Returns
+        -------
+
+            float
+                Percentage of cluster coverage.
+
+        """
+
+        if not self.defined:
+
+            return sum(self.hclusters_size)
+
+        else:
+            sizes = self.hclusters_size
+
+            # Sliding window algorithm
+            curr_sum = sum(sizes[:self.n])
+            res = curr_sum
+            for i in range(self.n, len(sizes)):
+                curr_sum += sizes[i] - sizes[i - self.n]
+                res = max(res, curr_sum)
+
+            return res
+
+    @property
     def coverage(self):
 
         """
-        Returns the current state hidden cluster coverage.
+        Returns the current state hidden cluster total coverage.
 
         Returns
         -------
@@ -128,6 +181,23 @@ class State:
         """
 
         return self._generator.X
+
+    def _set_cluster_coverage(self):
+        """
+        Returns a list of hidden clusters coverage.
+
+        Returns
+        -------
+
+            list[float]
+                Ordered list hidden cluster coverage.
+
+        """
+
+        max_size = self.max_hclusters_size
+        sizes = self.hclusters_size
+
+        return [cluster/max_size for cluster in sizes]
 
     def _set_node(self, x, ntype, param):
 
@@ -222,6 +292,9 @@ class State:
         # update ntype
         self._ntypes = [ntypes for ntypes in self.current.ntypes]
         self._ntypes.insert(0, self._ntypes.pop())
+
+        # update cluster coverage
+        self.cluster_coverage = self._set_cluster_coverage()
 
         return self.current
 

@@ -11,7 +11,7 @@ from scipy.optimize import linear_sum_assignment
 from ..utils import actions, metrics
 from ..utils.helper import loader
 
-# TODO test & docs
+
 class BaseEnv(gym.Env, ABC):
 
     """
@@ -25,6 +25,7 @@ class BaseEnv(gym.Env, ABC):
     def __init__(
             self,
             shape,
+            n=None,
             clusters=None,
             dataset_settings=None,
             seed=None,
@@ -261,9 +262,7 @@ class BaseEnv(gym.Env, ABC):
         cost_matrix = self._metric(self.state.cluster, self.state.hclusters)
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-        extras = abs(len(self.state.cluster) - len(self.state.hclusters))
-
-        return cost_matrix[row_ind, col_ind].sum() + extras / len(self.state.cluster) + extras
+        return (cost_matrix[row_ind, col_ind] * self.state.cluster_coverage[row_ind]).sum()
 
     @property
     def best_match(self):
