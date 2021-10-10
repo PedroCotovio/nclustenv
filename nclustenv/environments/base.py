@@ -259,7 +259,7 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        cost_matrix = self._metric(self.state.cluster, self.state.hclusters)
+        cost_matrix = self._metric(self.state.clusters, self.state.hclusters)
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
         return (cost_matrix[row_ind, col_ind] * self.state.cluster_coverage[row_ind]).sum()
@@ -279,7 +279,7 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return linear_sum_assignment(self._metric(self.state.cluster, self.state.hclusters))
+        return linear_sum_assignment(self._metric(self.state.clusters, self.state.hclusters))
 
     def reset(self):
 
@@ -371,7 +371,7 @@ class BaseEnv(gym.Env, ABC):
 
         i = 1
 
-        for cluster in self.state.cluster:
+        for cluster in self.state.clusters:
 
             hcluster = self.state.hclusters[self.best_match]
 

@@ -66,21 +66,23 @@ class State:
         return self._generator.X.shape
 
     @property
-    def cluster(self):
+    def clusters(self):
 
         """
-        Returns the current found cluster's index (Current solution).
+        Returns the current found clusters indexes (Current solution).
 
         Returns
         -------
 
             list
-                Found cluster.
+                Found clusters.
 
         """
 
-        return [[i for i, val in enumerate(self.current.nodes[ntype].data[0]) if val == 1]
-                for ntype in self._ntypes]
+        return [[[i
+                  for i, val in enumerate(self.current.nodes[ntype].data[j]) if val == 1]
+                 for ntype in self._ntypes]
+                for j in range(len(self.current.nodes[self._ntypes[0]].data))]
 
     @property
     def hclusters(self):
