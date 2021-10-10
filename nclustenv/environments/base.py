@@ -195,7 +195,7 @@ class BaseEnv(gym.Env, ABC):
             action_ = self._action(*action)
 
             # Take action
-            getattr(self.state, action_.action)(action_.ntype, action_.parameter)
+            getattr(self.state, action_.action)(action_.ntype, action_.parameters)
 
             # calculate volume match
             self._last_distances.pop(0)
