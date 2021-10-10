@@ -267,9 +267,10 @@ class BaseEnv(gym.Env, ABC):
 
     @property
     def best_match(self):
+        # READY FOR MCT
 
         """
-        Returns index of the hidden cluster with the best match for the current found cluster.
+        Returns index of the hidden clusters with the best match for the current found clusters.
 
         Returns
         -------
@@ -336,6 +337,8 @@ class BaseEnv(gym.Env, ABC):
 
     def render(self, mode='human'):
 
+        # READY FOR MCT
+
         """
         Renders the environment.
         The set of supported modes varies per environment. (And some
@@ -367,14 +370,22 @@ class BaseEnv(gym.Env, ABC):
         if not self._done:
             prefix = '(Current) '
 
-        if 1 in (1 for ax in self.state.cluster if len(ax) > 0) and self.best_match is not None:
+        i = 1
 
-            print('{}Found cluster'.format(prefix))
-            self._render(self.state.cluster)
-            print('')
+        for cluster in self.state.cluster:
 
-            print('{}Best matched hidden cluster [from {} hidden clusters]'.format(prefix, len(self.state.hclusters)))
-            self._render(self.state.hclusters[self.best_match])
+            hcluster = self.state.hclusters[self.best_match]
 
-        else:
+            if 1 in (1 for ax in cluster if len(ax) > 0) and hcluster is not None:
+
+                print('{}Found cluster {}'.format(prefix, i))
+                self._render(cluster)
+                print('')
+
+                print('{}Best matched hidden cluster'.format(prefix))
+                self._render(self.state.hclusters[self.best_match])
+
+                i += 1
+
+        if i == 1:
             print('No cluster found yet..')
