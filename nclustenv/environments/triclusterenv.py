@@ -29,6 +29,11 @@ class TriclusterEnv(BaseEnv):
         if shape is None:
             shape = [[100, 100, 2], [200, 200, 5]]
 
+        # Enforce shape size
+
+        if len(shape) != 3:
+            raise AttributeError('Shape does not produce a tridimensional dataset')
+
         # Enforce ctx > 1
         if shape[0][-1] < 2:
             shape[0][-1] = 2
