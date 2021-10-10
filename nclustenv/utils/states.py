@@ -1,5 +1,6 @@
 
 import nclustgen
+import numpy as np
 from .helper import loader
 
 
@@ -9,7 +10,7 @@ class State:
     State class to store current environment state.
     """
 
-    def __init__(self, generator='BiclusterGenerator', n=None):
+    def __init__(self, generator='BiclusterGenerator', n=None, np_random=None):
 
         """
         Parameters
@@ -20,6 +21,9 @@ class State:
 
         n: int, default None
             The number of clusters to find.
+
+        np_random: pointer, default None
+            Random object. If undefined np.random will be used
 
         Attributes
         ----------
@@ -33,12 +37,16 @@ class State:
 
         """
 
+        if np_random is None:
+            np_random = np.random
+
         self._cls = loader(generator, nclustgen)
         self.n = n
         self.defined = n is not None
 
         self._generator = None
         self._ntypes = None
+        self._np_random = np_random
 
         self.cluster_coverage = None
 
@@ -280,7 +288,6 @@ class State:
                 Current state.
 
         """
-
         if settings is None:
             settings = {}
 
