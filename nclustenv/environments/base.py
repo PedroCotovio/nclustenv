@@ -252,7 +252,11 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return float(last_distances[-2] - last_distances[-1] - self.penalty + (2 if goal else 0) - (1 if error else 0))
+        return float(
+            ((last_distances[-2] - last_distances[-1])
+             - self.penalty)
+            + ((2 if goal else 0) - (1 if error else 0))
+        )
 
     @property
     def volume_match(self):
@@ -275,7 +279,6 @@ class BaseEnv(gym.Env, ABC):
 
     @property
     def best_match(self):
-        # READY FOR MCT
 
         """
         Returns index of the hidden clusters with the best match for the current found clusters.
@@ -344,8 +347,6 @@ class BaseEnv(gym.Env, ABC):
         pass
 
     def render(self, mode='human'):
-
-        # READY FOR MCT
 
         """
         Renders the environment.
