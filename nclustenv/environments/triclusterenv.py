@@ -54,10 +54,6 @@ class TriclusterEnv(BaseEnv):
             penalty=penalty
         )
 
-        self.action_space = spaces.Tuple((spaces.Discrete(2),
-                                          spaces.Discrete(3),
-                                          spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
-
         self.state = State(generator='TriclusterGenerator', n=n, np_random=self.np_random)
         self.reset()
 

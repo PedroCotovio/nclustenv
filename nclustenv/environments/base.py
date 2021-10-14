@@ -124,8 +124,17 @@ class BaseEnv(gym.Env, ABC):
         self.target = error_margin
         self.penalty = penalty
 
-        self.action_space = None
-        self.observation_space = spaces.Box(low=np.array(shape[0]), high=np.array(shape[1]), dtype=np.int32)
+        self.action_space = spaces.Tuple((spaces.Discrete(4),
+                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
+
+        self.observation_space = spaces.Dict({
+            "action_mask": spaces.Box(0, 1, shape=(self.N,)),
+            "avail_actions": spaces.Box(0, 1, shape=(self.N,)),
+            "state": spaces.Box(
+                low=np.array(shape[0]),
+                high=np.array(shape[1]),
+                dtype=np.int32)
+        })
 
         # Init
 

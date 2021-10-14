@@ -46,10 +46,6 @@ class BiclusterEnv(BaseEnv):
             penalty=penalty
         )
 
-        self.action_space = spaces.Tuple((spaces.Discrete(2),
-                                          spaces.Discrete(2),
-                                          spaces.Box(low=0.0, high=1.0, shape=[1, ], dtype=np.float16)))
-
         self.state = State(generator='BiclusterGenerator', n=n, np_random=self.np_random)
         self.reset()
 
