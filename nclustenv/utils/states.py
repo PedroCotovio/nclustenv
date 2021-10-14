@@ -80,7 +80,7 @@ class State:
         """
 
         return [[[i
-                  for i, val in enumerate(self.current.nodes[ntype].data[j]) if val == 1]
+                  for i, val in enumerate(self.current.nodes[ntype].data[j]) if val]
                  for ntype in self._ntypes]
                 for j in range(len(self.current.nodes[self._ntypes[0]].data))]
 
