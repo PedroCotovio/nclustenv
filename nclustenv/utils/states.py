@@ -209,7 +209,7 @@ class State:
 
         return [cluster/max_size for cluster in sizes]
 
-    def _set_node(self, x, ntype, param):
+    def _set_node(self, x, params):
 
         """
         Sets the cluster value for given node.
@@ -217,24 +217,33 @@ class State:
         Parameters
         ----------
 
-        x: int
-            value to set [0, 1]
-        ntype: int
-            Index of node type.
-        param: float
-            Node to set [0, 1]
+        x: bool
+            value to set
+        params: list[float]
+            List of parameters, [ntype, node, cluster], range: [0, 1]
 
         """
 
-        if x in [0, 1]:
-            # parse ntype index to string
-            ntype = self._ntypes[ntype]
-            # parse param into node index
-            index = int(param * len(self.current.nodes(ntype)))
+        if x is bool:
+            # parse param(ntype) into string
+            ntype = self._ntypes[real_to_ind(self._ntypes, params[0])]
+            # parse param(node) into index
+            index = real_to_ind(self.current.nodes(ntype), params[1])
+            # parse param(cluster) into index
+            cluster = real_to_ind(self.current.nodes[ntype].data, params[2])
             # set value on node data
-            self.current.nodes[ntype].data[0][index] = x
+            self.current.nodes[ntype].data[cluster][index] = x
 
-    def add(self, ntype, param):
+    def _reset_clusters_index(self):
+        """
+        Resets the index of the cluster in the graph.
+        """
+
+        keys = self.current.nodes[self._ntypes[0]].data.keys()
+        for i, key in enumerate(keys):
+            self.current.ndata[i] = self.current.ndata.pop(key)
+
+    def add(self, params):
 
         """
         Adds a given node to the cluster.
@@ -242,16 +251,14 @@ class State:
         Parameters
         ----------
 
-        ntype: int
-            Index of node type.
-        param: float
-            Node to set [0, 1]
+        params: list[float]
+            List of parameters, [ntype, node, cluster], range: [0, 1]
 
         """
 
-        self._set_node(1, ntype, param)
+        self._set_node(True, params[:3])
 
-    def remove(self, ntype, param):
+    def remove(self, params):
 
         """
         Removes a given node from the cluster.
@@ -259,11 +266,12 @@ class State:
         Parameters
         ----------
 
-        ntype: int
-            Index of node type.
-        param: float
-            Node to set [0, 1]
+        params: list[float]
+            List of parameters, [ntype, node, cluster], range: [0, 1]
 
+        """
+
+        self._set_node(False, params[:3])
         """
 
         self._set_node(0, ntype, param)
