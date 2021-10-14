@@ -8,8 +8,8 @@ from gym import spaces, logger
 from gym.utils import seeding
 from scipy.optimize import linear_sum_assignment
 
-from ..utils import actions, metrics
-from ..utils.helper import loader
+from nclustenv.utils import actions, metrics
+from nclustenv.utils.helper import loader
 
 
 class BaseEnv(gym.Env, ABC):

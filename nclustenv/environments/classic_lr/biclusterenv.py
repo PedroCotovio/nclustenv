@@ -1,7 +1,7 @@
 
 from .base import BaseEnv
-from ..utils.states import State
-from ..utils.helper import matrix_to_string, index_to_matrix
+from nclustenv.utils.states import State
+from nclustenv.utils.helper import matrix_to_string, index_to_matrix
 
 from gym import spaces
 import numpy as np

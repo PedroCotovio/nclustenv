@@ -1,7 +1,7 @@
 
 from .base import BaseEnv
-from ..utils.states import State
-from ..utils.helper import tensor_to_string, index_to_tensor
+from nclustenv.utils.states import State
+from nclustenv.utils.helper import tensor_to_string, index_to_tensor
 
 from gym import spaces
 import numpy as np
