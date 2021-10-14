@@ -296,7 +296,11 @@ class State:
         # generate
         self._generator = self._cls(**settings)
         self._generator.generate(*shape, nclusters=nclusters)
-        self._generator.to_graph(framework='dgl', device='gpu')
+
+        if self.defined:
+            self._generator.to_graph(framework='dgl', device='gpu', nclusters=self.n)
+        else:
+            self._generator.to_graph(framework='dgl', device='gpu')
 
         # update ntype
         self._ntypes = [ntypes for ntypes in self.current.ntypes]
