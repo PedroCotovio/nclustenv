@@ -21,6 +21,8 @@ class Action:
             ======== ===========
             0        add
             1        remove
+            2        merge
+            3        split
             ======== ===========
 
         params: list[list[floats]]

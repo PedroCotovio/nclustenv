@@ -51,3 +51,9 @@ def loader(cls, module=None):
     """Loads a method from a pointer or a string"""
 
     return getattr(module, cls) if isinstance(cls, str) else cls
+
+
+def real_to_ind(x, param):
+    """Parses real values into list indexes"""
+
+    return int(param * len(x))

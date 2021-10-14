@@ -1,7 +1,8 @@
 
 import nclustgen
 import numpy as np
-from .helper import loader
+from .helper import loader, real_to_ind
+import torch as th
 
 
 class State:
@@ -272,9 +273,84 @@ class State:
         """
 
         self._set_node(False, params[:3])
+
+    def merge(self, params):
+
+        """
+        Merges two clusters
+
+        Parameters
+        ----------
+
+        params: list[float]
+            List of parameters, [cluster1, cluster2], range: [0, 1]
+
         """
 
-        self._set_node(0, ntype, param)
+        params = params[:2]
+
+        if not self.defined:
+
+            # get index to set
+            index = len(self.clusters)
+
+            # parse params(clusters) into index
+            cluster1, cluster2 = [real_to_ind(self.clusters, param) for param in params]
+
+            # Set new cluster
+            if cluster1 != cluster2:
+                for ntype in self._ntypes:
+                    self.current.nodes[ntype].data[index] = th.bitwise_or(
+                        self.current.nodes[ntype].data[cluster1], self.current.nodes[ntype].data[cluster2]
+                    )
+
+            # Delete previous clusters
+            self.current.ndata.pop(cluster1)
+            self.current.ndata.pop(cluster2)
+
+            # reset index
+            self._reset_clusters_index()
+
+    def split(self, params):
+
+        """
+        Splits two clusters
+
+        Parameters
+        ----------
+
+        params: list[float]
+            List of parameters, [cluster], range: [0, 1]
+
+        """
+
+        params = params[:1]
+
+        if not self.defined:
+
+            # get indexes to set
+            index1 = len(self.clusters)
+            index2 = index1 + 1
+
+            # parse param(cluster) into index
+            cluster = real_to_ind(self.clusters, params[0])
+
+            for ntype in self._ntypes:
+
+                # select partition point
+                index = self._np_random.randint(
+                    low=0, high=len(self.current.nodes[ntype].data[cluster]), dtype=np.int32
+                )
+
+                # create new clusters
+                self.current.nodes[ntype].data[index1] = self.current.nodes[ntype].data[cluster][:index]
+                self.current.nodes[ntype].data[index2] = self.current.nodes[ntype].data[cluster][index:]
+
+                # delete previous cluster
+                self.current.ndata.pop(cluster)
+
+                # reset index
+                self._reset_clusters_index()
 
     def reset(self, shape, nclusters, settings=None):
 
