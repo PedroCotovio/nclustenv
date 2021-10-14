@@ -165,17 +165,61 @@ class State:
     def current(self):
 
         """
-        Returns the current state.
+        Returns the current state graph.
 
         Returns
         -------
 
             dgl graph
-                Current state.
+                Current state graph.
 
         """
 
         return self._generator.graph
+
+    @property
+    def state(self):
+
+        """
+        Returns the state.
+
+        Returns
+        -------
+
+            dict
+                State
+
+        """
+
+        nclusters = len(self.clusters)
+
+        # Check if add and remove actions are available
+        add = np.full((len(self._ntypes), nclusters), True, dtype=bool)
+        remove = np.full((len(self._ntypes), nclusters), True, dtype=bool)
+
+        for i, ntype in enumerate(self._ntypes):
+            for j, cluster in enumerate(self.current.nodes[ntype].data):
+
+                if cluster.all():
+                    add[i][j] = False
+                elif not cluster.any():
+                    remove[i][j] = False
+
+        add = add.any()
+        remove = remove.any()
+
+        if self.defined:
+            mask = np.array([add, remove, False, False]).astype(int)
+
+        else:
+            merge = nclusters > 1
+            mask = np.array([add, remove, merge, True]).astype(int)
+
+        return {
+            "action_mask": mask,
+            "avail_actions": np.ones(len(mask)),
+            "state": self.current
+        }
 
     @property
     def as_dense(self):
@@ -393,7 +437,7 @@ class State:
         # update cluster coverage
         self.cluster_coverage = self._set_cluster_coverage()
 
-        return self.current
+        return self.state
 
 
 

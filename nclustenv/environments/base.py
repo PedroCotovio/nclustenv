@@ -237,7 +237,7 @@ class BaseEnv(gym.Env, ABC):
             self._steps_beyond_done += 1
             reward = 0.0
 
-        return self.state.current, reward, self._done, {}
+        return self.state.state, reward, self._done, {}
 
     def get_reward(self, last_distances, goal=False, error=False):
 
