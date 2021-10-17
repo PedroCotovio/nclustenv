@@ -83,7 +83,7 @@ class State:
         return [[[i
                   for i, val in enumerate(self.current.nodes[ntype].data[j]) if val]
                  for ntype in self._ntypes]
-                for j in range(len(self.current.nodes[self._ntypes[0]].data))]
+                for j in self.current.nodes[self._ntypes[0]].data]
 
     @property
     def hclusters(self):
@@ -198,7 +198,9 @@ class State:
         remove = np.full((len(self._ntypes), nclusters), True, dtype=bool)
 
         for i, ntype in enumerate(self._ntypes):
-            for j, cluster in enumerate(self.current.nodes[ntype].data):
+            for j in self.current.nodes[ntype].data:
+
+                cluster = self.current.nodes[ntype].data[j]
 
                 if cluster.all():
                     add[i][j] = False
@@ -269,7 +271,7 @@ class State:
 
         """
 
-        if x is bool:
+        if isinstance(x, bool):
             # parse param(ntype) into string
             ntype = self._ntypes[real_to_ind(self._ntypes, params[0])]
             # parse param(node) into index
@@ -284,7 +286,7 @@ class State:
         Resets the index of the cluster in the graph.
         """
 
-        keys = self.current.nodes[self._ntypes[0]].data.keys()
+        keys = sorted(list(self.current.nodes[self._ntypes[0]].data.keys()))
         for i, key in enumerate(keys):
             self.current.ndata[i] = self.current.ndata.pop(key)
 
@@ -387,14 +389,23 @@ class State:
                 )
 
                 # create new clusters
-                self.current.nodes[ntype].data[index1] = self.current.nodes[ntype].data[cluster][:index]
-                self.current.nodes[ntype].data[index2] = self.current.nodes[ntype].data[cluster][index:]
+                self.current.nodes[ntype].data[index1] = th.cat((
+                    self.current.nodes[ntype].data[cluster][:index],
+                    th.zeros(len(self.current.nodes[ntype].data[cluster][index:]), dtype=th.bool)),
+                    0
+                )
 
-                # delete previous cluster
-                self.current.ndata.pop(cluster)
+                self.current.nodes[ntype].data[index2] = th.cat((
+                    self.current.nodes[ntype].data[cluster][index:],
+                    th.zeros(len(self.current.nodes[ntype].data[cluster][:index]), dtype=th.bool)),
+                    0
+                )
 
-                # reset index
-                self._reset_clusters_index()
+            # delete previous cluster
+            self.current.ndata.pop(cluster)
+
+            # reset index
+            self._reset_clusters_index()
 
     def reset(self, shape, nclusters, settings=None):
 
