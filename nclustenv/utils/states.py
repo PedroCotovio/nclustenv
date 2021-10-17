@@ -1,8 +1,13 @@
 
 import nclustgen
 import numpy as np
+from dgl.dataloading import GraphDataLoader
+from torch.utils.data import SubsetRandomSampler
+
 from .helper import loader, real_to_ind
 import torch as th
+
+from dgl.data import DGLDataset
 
 
 class State:
@@ -449,6 +454,136 @@ class State:
         self.cluster_coverage = self._set_cluster_coverage()
 
         return self.state
+
+
+class OfflineState(State):
+
+    """
+    Offline state class to store current environment state in offline environments.
+    """
+
+    def __init__(
+            self,
+            dataset,
+            train_test_split=0.8,
+            n=None,
+            np_random=None):
+        """
+        Parameters
+        ----------
+
+        dataset: class
+             DGL dataset class.
+
+        train_test_split: float, default 0.8
+            The percentage for train/test split
+
+        n: int, default None
+            The number of clusters to find.
+
+        np_random: pointer, default None
+            Random object. If undefined np.random will be used
+
+        Attributes
+        ----------
+
+        n: int
+            The number of clusters to find.
+        defined: object
+            If the number of clusters to find is known
+        cluster_coverage: list[float]
+            An ordered list of with the percentage of coverage for every hidden cluster.
+
+        """
+
+        if not isinstance(dataset, DGLDataset):
+            raise AttributeError('Dataset must inherit from DGLDataset class')
+
+        if 0 > train_test_split or train_test_split > 1 :
+            raise AttributeError('train_test_split must be between 0 and 1')
+
+
+        super(OfflineState, self).__init__(
+            n=n,
+            np_random=np_random
+        )
+
+        num_examples = len(dataset)
+        num_train = int(num_examples * train_test_split)
+
+        train_sampler = SubsetRandomSampler(th.arange(num_train))
+        test_sampler = SubsetRandomSampler(th.arange(num_train, num_examples))
+
+        self._train_dataloader = GraphDataLoader(
+            dataset, sampler=train_sampler, batch_size=1, drop_last=False)
+        self._test_dataloader = GraphDataLoader(
+            dataset, sampler=test_sampler, batch_size=1, drop_last=False)
+
+        self._test_iter = 0
+        self.graph = None
+
+    @property
+    def current(self):
+
+        """
+        Returns the current state graph.
+
+        Returns
+        -------
+
+            dgl graph
+                Current state graph.
+
+        """
+
+        return self.graph
+
+    @property
+    def hclusters(self):
+        """
+        Returns hidden clusters index (Goal).
+
+        Returns
+        -------
+
+            list
+                Hidden clusters.
+
+        """
+
+        return [[val
+                  for val in (self.current.nodes[ntype].data['Y'])]
+                 for ntype in self._ntypes]
+
+    def _init_clusts(self):
+
+        if self.defined:
+            nclusters = self.n
+        else:
+            nclusters = 1
+
+        for n, axis in enumerate(self._ntypes):
+            for i in range(nclusters):
+                self.graph.nodes[axis].data[i] = th.zeros(len(self.graph.nodes(axis)), dtype=th.bool)
+
+    def reset(self, train=True):
+
+        if train:
+            self.graph = next(self._train_dataloader.__iter__())
+            self._init_clusts()
+
+            return self.state
+
+        else:
+            self.graph = next(self._test_dataloader.__iter__())
+            self._init_clusts()
+            self._test_iter += 1
+
+            return self.state, self._test_iter == len(self._test_dataloader)
+
+
+
+
 
 
 
