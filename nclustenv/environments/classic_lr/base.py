@@ -63,7 +63,7 @@ class BaseEnv(gym.Env, ABC):
             ----------------------------
             name             task
             ================ ===========
-            match_score_1_n  single
+            match_score      Any
             ================ ===========
 
         action: str or class, default 'Action'.
