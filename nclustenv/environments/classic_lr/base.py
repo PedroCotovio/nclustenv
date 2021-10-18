@@ -9,7 +9,7 @@ from gym.utils import seeding
 from scipy.optimize import linear_sum_assignment
 
 from nclustenv.utils import actions, metrics
-from nclustenv.utils.helper import loader
+from nclustenv.utils.helper import loader, parse_ds_settings
 
 
 class BaseEnv(gym.Env, ABC):
@@ -49,9 +49,22 @@ class BaseEnv(gym.Env, ABC):
         dataset_settings: dict, default {}
             Dataset settings to be passed to generator.
 
+            **Format**: {parameter: {value: None, randomize: Bool}, type: {'Categorical', 'Continuous'}
+
+            If randomize is True, value should contain a list with the values to sample from or the range.
+
+            Examples
+            --------
+            >>> dataset_settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'Categorical'},
+            >>> 'patterns': {'value': [['Order_Preserving', 'None'], ['None', 'Order_Preserving']], 'randomize': False,
+            >>> 'type': 'Categorical'},
+            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'Continuous'}
+            >>> }
+
+
             Note
             ----
-                Parameters `silence` and `in_memory` should not be set, and will be overwritten.
+                Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
 
         seed: int, default None
             Seed to initialize random object.
@@ -107,12 +120,8 @@ class BaseEnv(gym.Env, ABC):
         if dataset_settings is None:
             dataset_settings = {}
 
-        # Enforce fixed settings
-        dataset_settings['silence'] = True
-        dataset_settings['in_memory'] = True
-
         self._clusters = clusters
-        self.dataset_settings = dataset_settings
+        self.dataset_settings = parse_ds_settings(dataset_settings)
 
         # metric pointer
         self._metric = loader(metric, metrics)
@@ -293,6 +302,67 @@ class BaseEnv(gym.Env, ABC):
 
         return linear_sum_assignment(self._metric(self.state.clusters, self.state.hclusters))
 
+    def _sample(self, low, high, discrete=True):
+
+        """
+        Returns a random sample from a defined space.
+
+        Returns
+        -------
+
+            int or float
+                Space random sample.
+
+        """
+
+        try:
+            if discrete:
+                return self.np_random.randint(low=low, high=high)
+            else:
+                return self.np_random.random(low=low, high=high)
+        except ValueError:
+            return low
+
+    def _randomize(self):
+
+        """
+        Returns a randomized sample of the dataset space.
+
+        Returns
+        -------
+
+            list
+                Dataset shape.
+
+            int
+                Number of clusters.
+
+            dict
+                Dataset advanced settings.
+
+        """
+
+        # Sample basic settings
+        shape = self._sample(self.observation_space.low, self.observation_space.high)
+        nclusters = self._sample(*self._clusters)
+
+        # Get Settings
+        settings = {'seed': self.np_random.randint(low=1, high=10 ** 9, dtype=np.int32)}
+
+        ## Fixed
+        for key, value in self.dataset_settings['fixed'].items():
+            settings[key] = value
+
+        ## Discrete
+        for key, value in self.dataset_settings['discrete'].items():
+            settings[key] = value[self._sample(0, len(value))]
+
+        ## Continuous
+        for key, value in self.dataset_settings['continuous'].items():
+            settings[key] = self._sample(low=value[0], high=value[1], discrete=False)
+
+        return shape, nclusters, settings
+
     def reset(self):
 
         """
@@ -315,22 +385,7 @@ class BaseEnv(gym.Env, ABC):
         self._last_distances = [1.0, 1.0, 1.0]
         self._done = False
 
-        # reset seed
-        self.dataset_settings['seed'] = self.np_random.randint(low=1, high=10 ** 9, dtype=np.int32)
-
-        # define shape
-        try:
-            shape = self.np_random.randint(low=self.observation_space.low, high=self.observation_space.high)
-        except ValueError:
-            shape = self.observation_space.low
-
-        # define nclusters
-        try:
-            nclusters = self.np_random.randint(*self._clusters)
-        except ValueError:
-            nclusters = self._clusters[0]
-
-        return self.state.reset(shape=shape, nclusters=nclusters, settings=self.dataset_settings)
+        return self.state.reset(*self._randomize())
 
     @abc.abstractmethod
     def _render(self, index):
