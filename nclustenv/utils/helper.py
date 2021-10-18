@@ -72,3 +72,47 @@ def clusters_from_bool(graph, ntypes, hclusters=False):
               for i, val in enumerate(graph.nodes[ntype].data[j]) if val]
              for ntype in ntypes]
             for j in keys]
+
+
+def parse_ds_settings(settings, enforced=None):
+
+    """Parse dataset settings into actionable dict"""
+
+    if enforced is None:
+        enforced = {
+            'silence': True,
+            'in_memory': True,
+            'seed': None
+        }
+
+    new_settings = {
+        'fixed': {},
+        'discrete': {},
+        'continuous': {},
+    }
+
+    keys = list(settings.keys())
+
+    # Enforce fixed settings
+
+    for key in list(enforced.keys()):
+        if key in keys:
+            keys.remove(key)
+
+        new_settings['fixed'][key] = enforced[key]
+
+    for key in keys:
+        if settings[key]['randomize']:
+            if settings[key]['type'] == 'categorical':
+                new_settings['discrete'][key] = settings[key]['value']
+
+            elif settings['key']['type'] == 'continuous':
+                new_settings['continuous'][key] = settings[key]['value']
+
+        else:
+            new_settings['fixed'][key] = settings[key]['value']
+
+    return new_settings
+
+
+
