@@ -4,7 +4,7 @@ import numpy as np
 from dgl.dataloading import GraphDataLoader
 from torch.utils.data import SubsetRandomSampler
 
-from .helper import loader, real_to_ind
+from .helper import loader, real_to_ind, clusters_from_bool
 import torch as th
 
 from dgl.data import DGLDataset
@@ -85,10 +85,7 @@ class State:
 
         """
 
-        return [[[i
-                  for i, val in enumerate(self.current.nodes[ntype].data[j]) if val]
-                 for ntype in self._ntypes]
-                for j in self.current.nodes[self._ntypes[0]].data]
+        return clusters_from_bool(self.current, self._ntypes)
 
     @property
     def hclusters(self):
@@ -430,8 +427,8 @@ class State:
         Returns
         -------
 
-            dgl graph
-                Current state.
+            observation (object)
+                The initial observation.
 
         """
         if settings is None:
@@ -502,7 +499,6 @@ class OfflineState(State):
         if 0 > train_test_split or train_test_split > 1 :
             raise AttributeError('train_test_split must be between 0 and 1')
 
-
         super(OfflineState, self).__init__(
             n=n,
             np_random=np_random
@@ -523,6 +519,21 @@ class OfflineState(State):
         self.graph = None
 
     @property
+    def shape(self):
+
+        """
+        Returns the state's shape.
+
+        Returns
+        -------
+
+            list
+                Shape of current state.
+
+        """
+        return [self.current.nodes(axis).shape for axis in self._ntypes]
+
+    @property
     def current(self):
 
         """
@@ -539,7 +550,24 @@ class OfflineState(State):
         return self.graph
 
     @property
+    def clusters(self):
+
+        """
+        Returns the current found clusters indexes (Current solution).
+
+        Returns
+        -------
+
+            list
+                Found clusters.
+
+        """
+
+        return clusters_from_bool(self.current, self._ntypes)
+
+    @property
     def hclusters(self):
+
         """
         Returns hidden clusters index (Goal).
 
@@ -551,11 +579,13 @@ class OfflineState(State):
 
         """
 
-        return [[val
-                  for val in (self.current.nodes[ntype].data['Y'])]
-                 for ntype in self._ntypes]
+        return clusters_from_bool(self.current, self._ntypes, True)
 
     def _init_clusts(self):
+
+        """
+        Initializes clusters on current graph
+        """
 
         if self.defined:
             nclusters = self.n
@@ -566,7 +596,24 @@ class OfflineState(State):
             for i in range(nclusters):
                 self.graph.nodes[axis].data[i] = th.zeros(len(self.graph.nodes(axis)), dtype=th.bool)
 
-    def reset(self, train=True):
+    def reset(self, train=True, **kwargs):
+
+        """
+        Resets the state (generates new state)
+
+        Parameters
+        ----------
+
+        train: bool
+            If the algorithm is training.
+
+        Returns
+        -------
+
+            observation (object)
+                The initial observation.
+
+        """
 
         if train:
             self.graph = next(self._train_dataloader.__iter__())
