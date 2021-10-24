@@ -1,5 +1,5 @@
 
-from gym.envs.registration import register
+from gym.envs import register
 
 # Classic Environments
 register(id='BiclusterEnv-v0',
