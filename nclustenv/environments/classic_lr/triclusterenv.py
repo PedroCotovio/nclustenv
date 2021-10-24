@@ -33,7 +33,7 @@ class TriclusterEnv(BaseEnv):
 
         # Enforce shape size
 
-        if len(shape) != 3:
+        if len(shape[0]) != 3:
             raise AttributeError('Shape does not produce a tridimensional dataset')
 
         # Enforce ctx > 1
@@ -44,7 +44,7 @@ class TriclusterEnv(BaseEnv):
 
         super(TriclusterEnv, self).__init__(
             shape=shape,
-            n=None,
+            n=n,
             clusters=clusters,
             dataset_settings=dataset_settings,
             seed=seed,

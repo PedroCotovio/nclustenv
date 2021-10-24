@@ -31,12 +31,12 @@ class BiclusterEnv(BaseEnv):
         if shape is None:
             shape = [[100, 100], [200, 200]]
 
-        if len(shape) != 2:
+        if len(shape[0]) != 2:
             raise AttributeError('Shape does not produce a bidimensional dataset')
 
         super(BiclusterEnv, self).__init__(
             shape=shape,
-            n=None,
+            n=n,
             clusters=clusters,
             dataset_settings=dataset_settings,
             seed=seed,
