@@ -29,7 +29,7 @@ class State:
             The number of clusters to find.
 
         np_random: pointer, default None
-            Random object. If undefined np.random will be used
+            Random State.
 
         Attributes
         ----------
@@ -44,7 +44,7 @@ class State:
         """
 
         if np_random is None:
-            np_random = np.random
+            np_random = np.random.RandomState()
 
         self._cls = loader(generator, nclustgen)
         self.n = n
@@ -256,7 +256,7 @@ class State:
         max_size = self.max_hclusters_size
         sizes = self.hclusters_size
 
-        return [cluster/max_size for cluster in sizes]
+        return np.array([cluster/max_size for cluster in sizes])
 
     def _set_node(self, x, params):
 
@@ -352,12 +352,12 @@ class State:
                         self.current.nodes[ntype].data[cluster1], self.current.nodes[ntype].data[cluster2]
                     )
 
-            # Delete previous clusters
-            self.current.ndata.pop(cluster1)
-            self.current.ndata.pop(cluster2)
+                # Delete previous clusters
+                self.current.ndata.pop(cluster1)
+                self.current.ndata.pop(cluster2)
 
-            # reset index
-            self._reset_clusters_index()
+                # reset index
+                self._reset_clusters_index()
 
     def split(self, params):
 
@@ -398,8 +398,8 @@ class State:
                 )
 
                 self.current.nodes[ntype].data[index2] = th.cat((
-                    self.current.nodes[ntype].data[cluster][index:],
-                    th.zeros(len(self.current.nodes[ntype].data[cluster][:index]), dtype=th.bool)),
+                    th.zeros(len(self.current.nodes[ntype].data[cluster][:index]), dtype=th.bool),
+                    self.current.nodes[ntype].data[cluster][index:]),
                     0
                 )
 
