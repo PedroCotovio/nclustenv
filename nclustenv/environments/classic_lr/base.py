@@ -6,6 +6,7 @@ import numpy as np
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
+from nclustenv.utils.spaces import DGLHeteroGraphSpace
 from scipy.optimize import linear_sum_assignment
 
 from nclustenv.utils import actions, metrics
@@ -133,18 +134,6 @@ class BaseEnv(gym.Env, ABC):
         self.target = error_margin
         self.penalty = penalty
 
-        self.action_space = spaces.Tuple((spaces.Discrete(4),
-                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
-
-        self.observation_space = spaces.Dict({
-            "action_mask": spaces.Box(0, 1, shape=(self.N,)),
-            "avail_actions": spaces.Box(0, 1, shape=(self.N,)),
-            "state": spaces.Box(
-                low=np.array(shape[0]),
-                high=np.array(shape[1]),
-                dtype=np.int32)
-        })
-
         # Init
 
         self._last_distances = None
@@ -156,6 +145,24 @@ class BaseEnv(gym.Env, ABC):
         self.state = None
 
         self.seed(seed)
+
+        # spaces
+
+        self.action_space = spaces.Tuple((spaces.Discrete(4),
+                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
+
+        self.observation_space = spaces.Dict({
+            "action_mask": spaces.Box(0, 1, shape=(4,)),
+            "avail_actions": spaces.Box(0, 1, shape=(4,)),
+            "state": DGLHeteroGraphSpace(
+                shape=shape,
+                n=n,
+                clusters=clusters,
+                settings=self.dataset_settings,
+                np_random=self.np_random,
+                dtype=np.int32
+            )
+        })
 
     def seed(self, seed=None):
 
@@ -218,7 +225,7 @@ class BaseEnv(gym.Env, ABC):
 
             # calculate volume match
             self._last_distances.pop(0)
-            self._last_distances.append(1-self.volume_match)
+            self._last_distances.append(self.volume_match)
 
             # check state
 
@@ -302,67 +309,6 @@ class BaseEnv(gym.Env, ABC):
 
         return linear_sum_assignment(self._metric(self.state.clusters, self.state.hclusters))
 
-    def _sample(self, low, high, discrete=True):
-
-        """
-        Returns a random sample from a defined space.
-
-        Returns
-        -------
-
-            int or float
-                Space random sample.
-
-        """
-
-        try:
-            if discrete:
-                return self.np_random.randint(low=low, high=high)
-            else:
-                return self.np_random.random(low=low, high=high)
-        except ValueError:
-            return low
-
-    def _randomize(self):
-
-        """
-        Returns a randomized sample of the dataset space.
-
-        Returns
-        -------
-
-            list
-                Dataset shape.
-
-            int
-                Number of clusters.
-
-            dict
-                Dataset advanced settings.
-
-        """
-
-        # Sample basic settings
-        shape = self._sample(self.observation_space.low, self.observation_space.high)
-        nclusters = self._sample(*self._clusters)
-
-        # Get Settings
-        settings = {'seed': self.np_random.randint(low=1, high=10 ** 9, dtype=np.int32)}
-
-        ## Fixed
-        for key, value in self.dataset_settings['fixed'].items():
-            settings[key] = value
-
-        ## Discrete
-        for key, value in self.dataset_settings['discrete'].items():
-            settings[key] = value[self._sample(0, len(value))]
-
-        ## Continuous
-        for key, value in self.dataset_settings['continuous'].items():
-            settings[key] = self._sample(low=value[0], high=value[1], discrete=False)
-
-        return shape, nclusters, settings
-
     def reset(self):
 
         """
@@ -385,7 +331,7 @@ class BaseEnv(gym.Env, ABC):
         self._last_distances = [1.0, 1.0, 1.0]
         self._done = False
 
-        return self.state.reset(*self._randomize())
+        return self.state.reset(*self.observation_space['state'].sample())
 
     @abc.abstractmethod
     def _render(self, index):

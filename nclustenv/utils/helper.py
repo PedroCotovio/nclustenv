@@ -114,5 +114,23 @@ def parse_ds_settings(settings, enforced=None):
 
     return new_settings
 
+def retrive_skey(key: str, settings: dict, default=None, groups=None):
+
+    """Retrives a key from parsed settings"""
+
+    if groups is None:
+        groups = ['fixed', 'discrete', 'continuous']
+
+    for group in groups:
+        val = settings[group].get(key)
+
+        if val:
+            return val
+
+    return default
+
+
+
+
 
 
