@@ -1,15 +1,15 @@
 
 from setuptools import setup, find_packages
 import os, fnmatch, re, sys
+from nclustenv.version import VERSION
 
-version = ''
 license = ''
-with open('nclustgen/__init__.py', 'r') as fd:
+with open('nclustenv/__init__.py', 'r') as fd:
     content = fd.read()
-    version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', content, re.MULTILINE).group(1)
     license = re.search(
         r'^__license__\s*=\s*[\'"]([^\'"]*)[\'"]', content, re.MULTILINE).group(1)
+
+version = VERSION
 
 if version is None:
     raise RuntimeError('Cannot find version information')
