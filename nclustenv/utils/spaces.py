@@ -3,6 +3,7 @@ import gym
 from dgl import DGLHeteroGraph
 from .helper import retrive_skey
 import numpy as np
+import torch as th
 
 
 class DGLHeteroGraphSpace(gym.spaces.Box):
@@ -110,20 +111,27 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         # Retrive shape
         shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)])
 
-        # Check inicialization
+        # Check initialization
         if self.n:
             init = self.n
         else:
             init = 1
 
         # Verify settings
+        if isinstance(x.edata['w'], dict):
+            edata = x.edata['w'].copy()
+            edata = th.cat([edata[edge] for edge in edata.keys()])
+
+        else:
+            edata = x.edata['w']
 
         if retrive_skey('dstype', self.settings, 'NUMERIC') == 'NUMERIC':
-            values = retrive_skey('minval', self.settings, -10.0) <= min(x.edata['w']).item() \
-                     and retrive_skey('maxval', self.settings, 10.0) <= max(x.edata['w']).item()
+
+            values = retrive_skey('minval', self.settings, -10.0) >= edata.min().item() \
+                     and retrive_skey('maxval', self.settings, 10.0) <= edata.max().item()
 
             realval = retrive_skey('realval', self.settings, True)
-            dtype = x.edata['w'].isreal().all().item()
+            dtype = edata.isreal().all().item()
 
             settings = realval == dtype and values
 
@@ -133,7 +141,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             if symbols is None:
                 symbols = [i for i in range(retrive_skey('nsymbols', self.settings, 10))]
 
-            settings = x.edata['w'].apply_(lambda y: y in symbols).bool().all().item()
+            settings = edata.apply_(lambda y: y in symbols).bool().all().item()
 
         return (
             isinstance(x, DGLHeteroGraph)
