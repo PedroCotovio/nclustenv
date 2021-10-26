@@ -56,7 +56,7 @@ def loader(cls, module=None):
 def real_to_ind(x, param):
     """Parses real values into list indexes"""
 
-    return int(param * len(x))
+    return int(round(param * (len(x)-1), 0))
 
 
 def clusters_from_bool(graph, ntypes, hclusters=False):
