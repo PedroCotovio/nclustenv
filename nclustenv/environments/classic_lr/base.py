@@ -291,7 +291,7 @@ class BaseEnv(gym.Env, ABC):
         cost_matrix = self._metric(self.state.clusters, self.state.hclusters)
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
 
-        return (cost_matrix[row_ind, col_ind] * self.state.cluster_coverage[row_ind]).sum()
+        return (cost_matrix[row_ind, col_ind] * self.state.cluster_coverage[col_ind]).sum()
 
     @property
     def best_match(self):
