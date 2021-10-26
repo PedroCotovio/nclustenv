@@ -1,7 +1,9 @@
 import abc
+import termios
 from abc import ABC
 from statistics import mean
 import numpy as np
+import inquirer
 
 import gym
 from gym import spaces, logger
@@ -10,7 +12,7 @@ from nclustenv.utils.spaces import DGLHeteroGraphSpace
 from scipy.optimize import linear_sum_assignment
 
 from nclustenv.utils import actions, metrics
-from nclustenv.utils.helper import loader, parse_ds_settings
+from nclustenv.utils.helper import loader, parse_ds_settings, parse_bool_input
 
 
 class BaseEnv(gym.Env, ABC):
@@ -376,26 +378,70 @@ class BaseEnv(gym.Env, ABC):
             The mode to render with.
         """
 
-        prefix = ''
-        if not self._done:
-            prefix = '(Current) '
+        if mode == 'human':
 
-        i = 1
+            prefix = ''
+            if not self._done:
+                prefix = '(Current) '
 
-        for cluster in self.state.clusters:
+            i = 1
 
-            hcluster = self.state.hclusters[self.best_match]
+            clusters = self.state.clusters.copy()
+            hclusters = self.state.hclusters.copy()
 
-            if 1 in (1 for ax in cluster if len(ax) > 0) and hcluster is not None:
+            for row_ind, col_ind in zip(self.best_match[0], self.best_match[1]):
 
-                print('{}Found cluster {}'.format(prefix, i))
-                self._render(cluster)
-                print('')
+                cluster = clusters.pop(row_ind)
+                hcluster = hclusters.pop(col_ind)
 
-                print('{}Best matched hidden cluster'.format(prefix))
-                self._render(self.state.hclusters[self.best_match])
+                if 1 in (1 for ax in cluster if len(ax) > 0) and hcluster is not None:
 
-                i += 1
+                    print('{}Hidden cluster {}'.format(prefix, i))
+                    self._render(hcluster)
+                    print('')
 
-        if i == 1:
-            print('No cluster found yet..')
+                    print('{}Best matched found cluster'.format(prefix))
+                    self._render(cluster)
+
+                    i += 1
+
+            if i == 1:
+                print('No cluster found yet..')
+
+            else:
+                if len(clusters) > 0:
+                    unmatched = [clusters, 'Found']
+                elif len(hclusters) > 0:
+                    unmatched = [hclusters, 'Hidden']
+                else:
+                    unmatched = None
+
+                if unmatched:
+
+                    print('There are {} unmatched [{}] clusters'.format(len(unmatched[0]), unmatched[1]))
+
+                    try:
+                        confirm = {
+                            inquirer.Confirm('confirmed',
+                                             message="Do you want to render them",
+                                             default=True),
+                        }
+                        confirmation = inquirer.prompt(confirm)
+
+                        confirmed = confirmation["confirmed"]
+
+                    except termios.error:
+                        confirmation = input()
+                        confirmed = parse_bool_input(confirmation)
+
+                    if confirmed:
+                        print('Clusters possible to render:')
+                        print('')
+                        for i, c in enumerate(unmatched[0]):
+                            if 1 in (1 for ax in c if len(ax) > 0):
+                                print('Unmatched {}'.format(i))
+                                self._render(c)
+                                print('')
+
+
+

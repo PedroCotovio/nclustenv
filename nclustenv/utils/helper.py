@@ -114,6 +114,7 @@ def parse_ds_settings(settings, enforced=None):
 
     return new_settings
 
+
 def retrive_skey(key: str, settings: dict, default=None, groups=None):
 
     """Retrives a key from parsed settings"""
@@ -128,6 +129,19 @@ def retrive_skey(key: str, settings: dict, default=None, groups=None):
             return val
 
     return default
+
+
+def parse_bool_input(x, default=True):
+
+    """Parses an Y/n input into bool"""
+
+    if x:
+        if x in ['Y', 'y']:
+            return True
+        elif x in ['N', 'n']:
+            return False
+
+    return bool(default)
 
 
 
