@@ -8,6 +8,10 @@ import torch as th
 
 class DGLHeteroGraphSpace(gym.spaces.Box):
 
+    """
+    Implementation of a DGLGraph space.
+    """
+
     def __init__(
             self,
             shape,
@@ -18,6 +22,40 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             *args, **kwargs
 
     ):
+
+        """
+        Parameters
+        ----------
+
+        shape: list, default [[100, 100, 2], [200, 200, 5]]
+            List of length 2 where the first element is the minimum shape the observation space and the second is the
+            maximum.
+        clusters: [int], default [1, 1]
+            List of length 2 where the first element is the minimum number of cluster to be hidden in the environment
+            and the second is the maximum.
+        settings: dict, default {}
+            Dataset settings to be passed to generator.
+
+            **Format**: {parameter: {value: None, randomize: Bool}, type: {'Categorical', 'Continuous'}
+
+            If randomize is True, value should contain a list with the values to sample from or the range.
+
+            Examples
+            --------
+            >>> settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'Categorical'},
+            >>> 'patterns': {'value': [['Order_Preserving', 'None'], ['None', 'Order_Preserving']], 'randomize': False,
+            >>> 'type': 'Categorical'},
+            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'Continuous'}
+            >>> }
+
+
+            Note
+            ----
+                Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
+        np_random: numpy random object
+            Random object.
+        """
+
         if np_random is None:
             np_random = np.random.RandomState()
 
@@ -69,7 +107,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
     def sample(self):
 
         """
-        Returns a randomized sample of the dataset space.
+        Returns a sample of the space.
 
         Returns
         -------
