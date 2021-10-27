@@ -1,2 +1,0 @@
-
-from .curriculumenv import CurriculumEnv

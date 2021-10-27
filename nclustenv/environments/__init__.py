@@ -1,16 +1,20 @@
 
 from gym.envs import register
 
-# Classic Environments
+# Online Environments
 register(id='BiclusterEnv-v0',
-    entry_point='nclustenv.environments.classic_lr.biclusterenv:BiclusterEnv'
-)
+         entry_point='nclustenv.environments.classic_lr.biclusterenv:BiclusterEnv'
+         )
 
 register(id='TriclusterEnv-v0',
-    entry_point='nclustenv.environments.classic_lr.triclusterenv:TriclusterEnv'
-)
+         entry_point='nclustenv.environments.classic_lr.triclusterenv:TriclusterEnv'
+         )
 
-# Curriculum Environment
-register(id='CurriculumEnv-v0',
-    entry_point='nclustenv.environments.curriculum_lr.curriculumenv:CurriculumEnv'
-)
+# Offline Enviroments
+register(id='OfflineBiclusterEnv-v0',
+         entry_point='nclustenv.environments.classic_lr.biclusterenv:OfflineBiclusterEnv'
+         )
+
+register(id='OfflineTriclusterEnv-v0',
+         entry_point='nclustenv.environments.classic_lr.triclusterenv:OfflineTriclusterEnv'
+         )

@@ -28,6 +28,8 @@ def create_env(config, *args, **kwargs):
         from nclustenv.environments.classic_lr.biclusterenv import BiclusterEnv as env
     elif env_name == 'TriclusterEnv-v0':
         from nclustenv.environments.classic_lr.triclusterenv import TriclusterEnv as env
-    elif env_name == 'CurriculumEnv-v0':
-        from nclustenv.environments.curriculum_lr.curriculumenv import CurriculumEnv as env
+    elif env_name == 'OfflineBiclusterEnv-v0':
+        from nclustenv.environments.classic_lr.biclusterenv import OfflineBiclusterEnv as env
+    elif env_name == 'OfflineTriclusterEnv-v0':
+        from nclustenv.environments.classic_lr.triclusterenv import OfflineTriclusterEnv as env
     return env

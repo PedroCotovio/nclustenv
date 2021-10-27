@@ -1,3 +1,3 @@
 
-from .biclusterenv import BiclusterEnv
-from .triclusterenv import TriclusterEnv
+from .biclusterenv import BiclusterEnv, OfflineBiclusterEnv
+from .triclusterenv import TriclusterEnv, OfflineTriclusterEnv
