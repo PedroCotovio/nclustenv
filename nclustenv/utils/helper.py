@@ -126,9 +126,13 @@ def retrive_skey(key: str, settings: dict, default=None, groups=None):
         val = settings[group].get(key)
 
         if val:
+            if not isinstance(val, list):
+                return [val]
+            elif not isinstance(val[0], list):
+                return [val]
             return val
 
-    return default
+    return [default]
 
 
 def parse_bool_input(x, default=True):

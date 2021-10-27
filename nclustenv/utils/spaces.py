@@ -125,23 +125,28 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         else:
             edata = x.edata['w']
 
-        if retrive_skey('dstype', self.settings, 'NUMERIC') == 'NUMERIC':
+        if 'NUMERIC' in retrive_skey('dstype', self.settings, 'NUMERIC'):
 
-            values = retrive_skey('minval', self.settings, -10.0) >= edata.min().item() \
-                     and retrive_skey('maxval', self.settings, 10.0) <= edata.max().item()
+            values = np.array(
+                [minval >= edata.min().item() for minval in retrive_skey('minval', self.settings, -10.0)]
+            ).any() \
+                     and np.array(
+                [maxval <= edata.max().item() for maxval in retrive_skey('maxval', self.settings, 10.0)]
+            ).any()
 
-            realval = retrive_skey('realval', self.settings, True)
-            dtype = edata.isreal().all().item()
+            realval = np.array(
+                [realval == edata.isreal().all().item() for realval in retrive_skey('realval', self.settings, True)]
+            ).any()
 
-            settings = realval == dtype and values
+            settings = realval and values
 
         else:
             symbols = retrive_skey('symbols', self.settings)
 
             if symbols is None:
-                symbols = [i for i in range(retrive_skey('nsymbols', self.settings, 10))]
+                symbols = [[i for i in range(nsymbols)] for nsymbols in retrive_skey('nsymbols', self.settings, 10)]
 
-            settings = edata.apply_(lambda y: y in symbols).bool().all().item()
+            settings = np.array([edata.apply_(lambda y: y in s).bool().all().item() for s in symbols]).any()
 
         return (
             isinstance(x, DGLHeteroGraph)
