@@ -58,10 +58,10 @@ class BaseEnv(gym.Env, ABC):
 
             Examples
             --------
-            >>> dataset_settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'Categorical'},
+            >>> dataset_settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'categorical'},
             >>> 'patterns': {'value': [['Order_Preserving', 'None'], ['None', 'Order_Preserving']], 'randomize': False,
-            >>> 'type': 'Categorical'},
-            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'Continuous'}
+            >>> 'type': 'categorical'},
+            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'continuous'}
             >>> }
 
 

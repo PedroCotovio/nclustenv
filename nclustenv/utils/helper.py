@@ -102,11 +102,11 @@ def parse_ds_settings(settings, enforced=None):
         new_settings['fixed'][key] = enforced[key]
 
     for key in keys:
-        if settings[key]['randomize']:
-            if settings[key]['type'] == 'categorical':
+        if settings[key].get('randomize', False):
+            if settings[key]['type'].lower() == 'categorical':
                 new_settings['discrete'][key] = settings[key]['value']
 
-            elif settings['key']['type'] == 'continuous':
+            elif settings[key]['type'].lower() == 'continuous':
                 new_settings['continuous'][key] = settings[key]['value']
 
         else:
@@ -115,20 +115,17 @@ def parse_ds_settings(settings, enforced=None):
     return new_settings
 
 
-def retrive_skey(key: str, settings: dict, default=None, groups=None):
+def retrive_skey(key: str, settings: dict, default=None):
 
     """Retrives a key from parsed settings"""
 
-    if groups is None:
-        groups = ['fixed', 'discrete', 'continuous']
+    groups = ['fixed', 'discrete', 'continuous']
 
     for group in groups:
         val = settings[group].get(key)
 
         if val:
-            if not isinstance(val, list):
-                return [val]
-            elif not isinstance(val[0], list):
+            if group == 'fixed':
                 return [val]
             return val
 

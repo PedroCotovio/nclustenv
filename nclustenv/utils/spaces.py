@@ -63,7 +63,11 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             clusters = [1, 1]
 
         if settings is None:
-            settings = {}
+            settings = {
+                'fixed': {},
+                'discrete': {},
+                'continuous': {},
+            }
 
         self.n = n
         self.clusters = clusters
@@ -93,7 +97,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             if discrete:
                 return self.np_random.randint(low=low, high=high)
             else:
-                return self.np_random.random(low=low, high=high)
+                return self.np_random.uniform(low=low, high=high)
         except ValueError:
             return low
 
@@ -151,9 +155,10 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
 
         # Check initialization
         if self.n:
-            init = self.n
+            init = len(x.nodes[self._node_labels(x.ntypes)[0]].data) == self.n
         else:
-            init = 1
+            init = True
+
 
         # Verify settings
         if isinstance(x.edata['w'], dict):
@@ -166,10 +171,10 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         if 'NUMERIC' in retrive_skey('dstype', self.settings, 'NUMERIC'):
 
             values = np.array(
-                [minval >= edata.min().item() for minval in retrive_skey('minval', self.settings, -10.0)]
+                [minval <= edata.min().item() for minval in retrive_skey('minval', self.settings, -10.0)]
             ).any() \
                      and np.array(
-                [maxval <= edata.max().item() for maxval in retrive_skey('maxval', self.settings, 10.0)]
+                [maxval >= edata.max().item() for maxval in retrive_skey('maxval', self.settings, 10.0)]
             ).any()
 
             realval = np.array(
