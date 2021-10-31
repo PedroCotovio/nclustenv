@@ -8,54 +8,57 @@ is satisfied.
 
 import unittest
 import nclustenv
-from nclustenv.version import ENV_LIST
+from nclustenv.version import ENV_LIST, TESTING_CONFIGS
 import traceback
 
 
 class TestCaseBase(unittest.TestCase):
 
     @staticmethod
-    def _build_env(env_name):
-        env = nclustenv.make(env_name)
+    def _build_env(env_name, **kwargs):
+        env = nclustenv.make(env_name, **kwargs)
         return env
 
 
 class TestEnv(TestCaseBase):
 
     def setUp(self):
-        self.scenarios = ENV_LIST
+        self.scenarios = zip(ENV_LIST, TESTING_CONFIGS)
 
     def test_make(self):
         # Ensures that environments are instantiated
 
-        for env_name in self.scenarios:
+        for env_name, configs in self.scenarios:
+            for config in configs:
 
-            tb = None
+                tb = None
 
-            try:
-                _ = self._build_env(env_name)
-                success = True
-            except Exception as e:
-                tb = e.__traceback__
-                success = False
+                try:
+                    _ = self._build_env(env_name, **config)
+                    success = True
+                except Exception as e:
+                    tb = e.__traceback__
+                    success = False
 
-            self.assertTrue(success, ''.join(traceback.format_tb(tb)))
+                self.assertTrue(success, ''.join(traceback.format_tb(tb)))
 
     def test_episode(self):
-        # Run 100 episodes and check observation space
+        # Run 50 episodes and check observation space
 
-        for env_name in self.scenarios:
+        for env_name, configs in self.scenarios:
+            for config in configs:
 
-            EPISODES = 100
-            env = self._build_env(env_name)
-            for ep in range(EPISODES):
-                state = env.reset()
-                while True:
-                    self.assertTrue(env.observation_space.contains(state),
-                            f"State out of range of observation space: {state}")
-                    action = env.action_space.sample()
-                    state, reward, done, info = env.step(action)
-                    if done:
-                        break
+                EPISODES = 5
+                env = self._build_env(env_name, **config)
+                for ep in range(EPISODES):
+                    state = env.reset()
+                    while True:
+                        self.assertTrue(env.observation_space.contains(state),
+                                        f"State out of range of observation space: {state}")
 
-            self.assertTrue(done)
+                        action = env.action_space.sample()
+                        state, reward, done, info = env.step(action)
+                        if done:
+                            break
+
+                    self.assertTrue(done)
