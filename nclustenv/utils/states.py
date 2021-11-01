@@ -409,7 +409,7 @@ class State:
             # reset index
             self._reset_clusters_index()
 
-    def reset(self, shape, nclusters, settings=None):
+    def reset(self, shape, nclusters, settings=None, **kwargs):
 
         """
         Resets the state (generates new state)
@@ -423,6 +423,12 @@ class State:
             Number of hidden clusters.
         settings: dict
             Dataset settings (nclustgen).
+        not_init: bool, default False
+            If True clusters are not initialized.
+
+            Note
+            ----
+                Use with care, this parameter might break the environment.
 
         Returns
         -------
@@ -438,7 +444,9 @@ class State:
         self._generator = self._cls(**settings)
         self._generator.generate(*shape, nclusters=nclusters)
 
-        if self.defined:
+        if kwargs.get('not_init'):
+            self._generator.to_graph(framework='dgl', device='gpu', nclusters=0)
+        elif self.defined:
             self._generator.to_graph(framework='dgl', device='gpu', nclusters=self.n)
         else:
             self._generator.to_graph(framework='dgl', device='gpu')
