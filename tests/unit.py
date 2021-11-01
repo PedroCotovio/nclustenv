@@ -19,6 +19,7 @@ from nclustenv.utils.helper import loader
 from nclustenv.utils.states import State
 from nclustenv.utils.actions import Action
 from nclustenv.environments.classic_lr import BiclusterEnv, TriclusterEnv
+from nclustenv.utils.spaces import DGLHeteroGraphSpace
 
 
 class TestCaseBase(unittest.TestCase):
@@ -281,23 +282,51 @@ class ActionTest(TestCaseBase):
 
         self.assertEqual(Action(*scene).parameters, expected)
 
-class ClassicEnvTest(TestCaseBase):
 
+class SpaceTest(TestCaseBase):
     def setUp(self):
-        pass
 
-    def
+        self.space = DGLHeteroGraphSpace(
+            shape=[[100, 10], [200, 50]],
+            n=5,
+            clusters=[2, 5],
+            settings={
+                'fixed': {
+                    'maxval': 5.0,
+                    'silence': True,
+                    'in_memory': True,
+                    'seed': 5
+                },
+                'discrete': {'realval': [False, True]},
+                'continuous': {'minval': [-1.0, 0.0]},
+            }
+        )
+
+        self.state = State(n=5)
+        self.state.reset(
+            shape=[150, 30],
+            nclusters=3,
+            settings={
+                'maxval': 5.0,
+                'realval': True,
+                'minval': 1.3,
+                'silence': True,
+                'in_memory': True,
+                'seed': 5
+            }
+        )
+
+    def test_contains(self):
+        self.assertTrue(self.space.contains(self.state.current))
+
+    def test_sample(self):
+
+        for _ in range(50):
+            self.assertTrue(self.space.contains(self.state.reset(*self.space.sample())['state']))
 
 
-class CurriculumEnvTest(TestCaseBase):
-
-    pass
 
 
 
-from nclustenv.environments.classic_lr import BiclusterEnv
-env = BiclusterEnv()
-action = env.action_space.sample()
-env.step(action)
 
 
