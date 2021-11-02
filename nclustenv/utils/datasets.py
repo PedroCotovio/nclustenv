@@ -7,7 +7,6 @@ from nclustenv.utils.helper import parse_ds_settings
 from nclustenv.utils.states import State
 
 import os
-import torch as th
 from dgl import save_graphs, load_graphs
 from dgl.data.utils import save_info, load_info
 
@@ -18,14 +17,14 @@ class SyntheticDataset(DGLDataset):
             self,
             length=10,
             shape=None,
-            n=None,
             clusters=None,
             dataset_settings=None,
             seed=None,
             generator='BiclusterGenerator',
             name='synthetic',
             save_dir=None,
-            verbose=False
+            verbose=False,
+            *args, **kwargs
     ):
 
         if dataset_settings is None:
@@ -43,7 +42,7 @@ class SyntheticDataset(DGLDataset):
 
         self._observation_space = {
                 'shape': shape,
-                'n': n,
+                'n': None,
                 'clusters': clusters,
                 'settings': parse_ds_settings(dataset_settings),
                 'np_random': np_random,
@@ -52,7 +51,7 @@ class SyntheticDataset(DGLDataset):
 
         self._state = {
             'generator': generator,
-            'n': n,
+            'n': None,
             'np_random': np_random
         }
 
@@ -74,7 +73,6 @@ class SyntheticDataset(DGLDataset):
             _state.reset(*_observation_space.sample(), not_init=True)
             self.graphs.append(_state.current)
             self.labels.append(_state.hclusters)
-
 
     def save(self):
         # save graphs and labels
