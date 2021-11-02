@@ -145,6 +145,15 @@ def parse_bool_input(x, default=True):
     return bool(default)
 
 
+def isListEmpty(x):
+
+    """Returns if all nested lists are empty"""
+
+    if isinstance(x, list):
+        return all(map(isListEmpty, x))
+    return False
+
+
 
 
 
