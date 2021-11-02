@@ -3,7 +3,8 @@
 '''
 Tests to ensure environment components functionality is satisfied.
 '''
-
+import shutil
+import traceback
 import unittest
 import pathlib as pl
 
@@ -15,11 +16,15 @@ import os
 import torch as th
 import dgl
 
-from nclustenv.utils.helper import loader
-from nclustenv.utils.states import State
+from nclustenv.utils.helper import loader, parse_ds_settings, isListEmpty
+from nclustenv.utils.states import State, OfflineState
 from nclustenv.utils.actions import Action
 from nclustenv.environments.classic_lr import BiclusterEnv, TriclusterEnv
 from nclustenv.utils.spaces import DGLHeteroGraphSpace
+from nclustenv.utils.datasets import SyntheticDataset
+from gym.spaces import Box
+
+from nclustenv.version import TESTING_CONFIGS, TESTING_CONFIGS_DATASETS
 
 
 class TestCaseBase(unittest.TestCase):
@@ -33,6 +38,82 @@ class TestCaseBase(unittest.TestCase):
     def assertIsNotFile(path):
         if pl.Path(path).resolve().is_file():
             raise AssertionError("File exists: %s" % str(path))
+
+    @staticmethod
+    def _build_dataset(**kwargs):
+        return SyntheticDataset(**kwargs)
+
+
+class ActionTest(TestCaseBase):
+
+    def setUp(self):
+
+        envs = [BiclusterEnv(), TriclusterEnv()]
+        self.scenarios = [env.action_space.sample() for env in envs for _ in range(100)]
+
+        self.labels = ['add', 'remove', 'merge', 'split']
+
+    def test_scenes(self):
+
+        for scene in self.scenarios:
+
+            action = Action(*scene)
+
+            # Check if tupple is encoded into action object
+            self.assertEqual(action.index, scene[0])
+            self.assertTrue((action.parameters == scene[1][scene[0]]).all())
+
+            # Check labels
+            self.assertEqual(action.action, self.labels[scene[0]])
+
+    def test_cropping(self):
+
+        scene = tuple([0, [[2, -0.1, 1, 0, 0.5], [], [], []]])
+        expected = [1, 0, 1, 0, 0.5]
+
+        self.assertEqual(Action(*scene).parameters, expected)
+
+
+class SpaceTest(TestCaseBase):
+    def setUp(self):
+
+        self.space = DGLHeteroGraphSpace(
+            shape=[[100, 10], [200, 50]],
+            n=5,
+            clusters=[2, 5],
+            settings={
+                'fixed': {
+                    'maxval': 5.0,
+                    'silence': True,
+                    'in_memory': True,
+                    'seed': 5
+                },
+                'discrete': {'realval': [False, True]},
+                'continuous': {'minval': [-1.0, 0.0]},
+            }
+        )
+
+        self.state = State(n=5)
+        self.state.reset(
+            shape=[150, 30],
+            nclusters=3,
+            settings={
+                'maxval': 5.0,
+                'realval': True,
+                'minval': 1.3,
+                'silence': True,
+                'in_memory': True,
+                'seed': 5
+            }
+        )
+
+    def test_contains(self):
+        self.assertTrue(self.space.contains(self.state.current))
+
+    def test_sample(self):
+
+        for _ in range(50):
+            self.assertTrue(self.space.contains(self.state.reset(*self.space.sample())['state']))
 
 
 class StateTest(TestCaseBase):
@@ -248,81 +329,157 @@ class StateTest(TestCaseBase):
                 self.assertEqual(state.clusters[-1], original_cluster)
 
 
+class SyntheticDatasetTest(TestCaseBase):
+
+    def setUp(self) -> None:
+        self.scenarios = TESTING_CONFIGS_DATASETS
+        self.datasets = []
+
+    def tearDown(self) -> None:
+
+        while any(self.datasets):
+            ds = self.datasets.pop()
+            folder_path = os.path.join(ds.save_path)
+
+            if os.path.exists(folder_path):
+                shutil.rmtree(folder_path)
+
+    def test_make(self):
+
+        for configs in self.scenarios:
+            for config in configs:
+
+                tb = None
+
+                try:
+                    ds = self._build_dataset(**config)
+                    self.datasets.append(ds)
+                    success = True
+
+                    # Check correct build
+                    self.assertEqual(ds.shape, config['shape'])
+                    self.assertEqual(ds.clusters, config['clusters'])
+                    if config.get('dataset_settings'):
+                        self.assertEqual(ds.settings, parse_ds_settings(config['dataset_settings']))
+
+                    # Check save
+                    self.assertIsFile(os.path.join(ds.save_path, ds.name + '_dgl_graph.bin'))
+                    self.assertIsFile(os.path.join(ds.save_path, ds.name + '_info.pkl'))
+
+                except Exception as e:
+                    tb = e.__traceback__
+                    success = False
+
+                self.assertTrue(success, ''.join(traceback.format_tb(tb)))
+
+    def test_load(self):
+
+        self.test_make()
+
+        for configs in self.scenarios:
+            for config in configs:
+
+                ds = self._build_dataset(
+                    name=config['name'],
+                    save_dir=config['save_dir']
+                )
+
+                # Check correct load
+                self.assertEqual(ds.shape, config['shape'])
+                self.assertEqual(ds.clusters, config['clusters'])
+
+                if config.get('dataset_settings'):
+                    self.assertEqual(ds.settings, parse_ds_settings(config['dataset_settings']))
+
+
 class OfflineStateTest(TestCaseBase):
 
-    pass
+    def setUp(self) -> None:
+
+        self.scenarios = zip(TESTING_CONFIGS[2:], TESTING_CONFIGS_DATASETS)
+        self.datasets = []
+        self.states = []
+
+    def tearDown(self) -> None:
+
+        while any(self.datasets):
+            ds = self.datasets.pop()
+            folder_path = os.path.join(ds.save_path)
+
+            if os.path.exists(folder_path):
+                shutil.rmtree(folder_path)
+
+        self.states = []
+
+    def test_make(self):
+
+        for configs, ds_configs in self.scenarios:
+            for config, ds_config in zip(configs, ds_configs):
+
+                tb = None
+
+                try:
+                    ds = self._build_dataset(**ds_config)
+                    self.datasets.append(ds)
+
+                    state = OfflineState(ds, **config)
+                    self.states.append(state)
+                    success = True
+
+                    # Check build
+                    state.reset()
+
+                    self.assertTrue(
+                        Box(low=np.array(ds.shape[0]), high=np.array(ds.shape[1])).contains(np.array(state.shape))
+                    )
+                    self.assertTrue(isListEmpty(state.clusters))
+                    self.assertFalse(state.current is None)
+                    self.assertFalse(state.label is None)
+
+                except Exception as e:
+                    tb = e.__traceback__
+                    success = False
+
+                self.assertTrue(success, ''.join(traceback.format_tb(tb)))
+
+    def test_reset(self):
+
+        self.test_make()
+
+        self.assertTrue(any(self.states))
+
+        for state in self.states:
+
+            for _ in range(len(state._train_dataloader) * 2):
+                s = state.reset()
+
+                self.assertTrue(isListEmpty(state.clusters))
+                self.assertFalse(state.current is None)
+                self.assertFalse(state.label is None)
+                self.assertEqual(state.current, s['state'])
+
+            for i in range(len(state._test_dataloader) * 2):
+                s, done = state.reset(train=False)
+
+                self.assertTrue(isListEmpty(state.clusters))
+                self.assertFalse(state.current is None)
+                self.assertFalse(state.label is None)
+                self.assertEqual(state.current, s['state'])
+
+                if i+1 >= len(state._test_dataloader):
+                    self.assertTrue(done)
+                    break
+
+                self.assertFalse(done)
 
 
-class ActionTest(TestCaseBase):
-
-    def setUp(self):
-
-        envs = [BiclusterEnv(), TriclusterEnv()]
-        self.scenarios = [env.action_space.sample() for env in envs for _ in range(100)]
-
-        self.labels = ['add', 'remove', 'merge', 'split']
-
-    def test_scenes(self):
-
-        for scene in self.scenarios:
-
-            action = Action(*scene)
-
-            # Check if tupple is encoded into action object
-            self.assertEqual(action.index, scene[0])
-            self.assertTrue((action.parameters == scene[1][scene[0]]).all())
-
-            # Check labels
-            self.assertEqual(action.action, self.labels[scene[0]])
-
-    def test_cropping(self):
-
-        scene = tuple([0, [[2, -0.1, 1, 0, 0.5], [], [], []]])
-        expected = [1, 0, 1, 0, 0.5]
-
-        self.assertEqual(Action(*scene).parameters, expected)
 
 
-class SpaceTest(TestCaseBase):
-    def setUp(self):
 
-        self.space = DGLHeteroGraphSpace(
-            shape=[[100, 10], [200, 50]],
-            n=5,
-            clusters=[2, 5],
-            settings={
-                'fixed': {
-                    'maxval': 5.0,
-                    'silence': True,
-                    'in_memory': True,
-                    'seed': 5
-                },
-                'discrete': {'realval': [False, True]},
-                'continuous': {'minval': [-1.0, 0.0]},
-            }
-        )
 
-        self.state = State(n=5)
-        self.state.reset(
-            shape=[150, 30],
-            nclusters=3,
-            settings={
-                'maxval': 5.0,
-                'realval': True,
-                'minval': 1.3,
-                'silence': True,
-                'in_memory': True,
-                'seed': 5
-            }
-        )
 
-    def test_contains(self):
-        self.assertTrue(self.space.contains(self.state.current))
 
-    def test_sample(self):
 
-        for _ in range(50):
-            self.assertTrue(self.space.contains(self.state.reset(*self.space.sample())['state']))
 
 
 
