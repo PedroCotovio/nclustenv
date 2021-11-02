@@ -16,7 +16,7 @@ class State:
     State class to store current environment state.
     """
 
-    def __init__(self, generator='BiclusterGenerator', n=None, np_random=None):
+    def __init__(self, generator='BiclusterGenerator', n=None, np_random=None, *args, **kwargs):
 
         """
         Parameters
@@ -115,7 +115,7 @@ class State:
 
         """
 
-        return [sum(map(len, cluster)) for cluster in self._generator.Y]
+        return [sum(map(len, cluster)) for cluster in self.hclusters]
 
     @property
     def max_hclusters_size(self):
@@ -409,6 +409,15 @@ class State:
             # reset index
             self._reset_clusters_index()
 
+    def _reset(self):
+
+        # update ntype
+        self._ntypes = [ntypes for ntypes in self.current.ntypes]
+        self._ntypes.insert(0, self._ntypes.pop())
+
+        # update cluster coverage
+        self.cluster_coverage = self._set_cluster_coverage()
+
     def reset(self, shape, nclusters, settings=None, **kwargs):
 
         """
@@ -451,12 +460,7 @@ class State:
         else:
             self._generator.to_graph(framework='dgl', device='gpu')
 
-        # update ntype
-        self._ntypes = [ntypes for ntypes in self.current.ntypes]
-        self._ntypes.insert(0, self._ntypes.pop())
-
-        # update cluster coverage
-        self.cluster_coverage = self._set_cluster_coverage()
+        self._reset()
 
         return self.state
 
@@ -472,7 +476,8 @@ class OfflineState(State):
             dataset,
             train_test_split=0.8,
             n=None,
-            np_random=None):
+            np_random=None,
+            *args, **kwargs):
         """
         Parameters
         ----------
@@ -525,6 +530,7 @@ class OfflineState(State):
 
         self._test_iter = 0
         self.graph = None
+        self.label = None
 
     @property
     def shape(self):
@@ -539,7 +545,7 @@ class OfflineState(State):
                 Shape of current state.
 
         """
-        return [self.current.nodes(axis).shape for axis in self._ntypes]
+        return tuple([list(self.current.nodes(axis).shape)[0] for axis in self._ntypes])
 
     @property
     def current(self):
@@ -558,22 +564,6 @@ class OfflineState(State):
         return self.graph
 
     @property
-    def clusters(self):
-
-        """
-        Returns the current found clusters indexes (Current solution).
-
-        Returns
-        -------
-
-            list
-                Found clusters.
-
-        """
-
-        return clusters_from_bool(self.current, self._ntypes)
-
-    @property
     def hclusters(self):
 
         """
@@ -587,7 +577,7 @@ class OfflineState(State):
 
         """
 
-        return clusters_from_bool(self.current, self._ntypes, True)
+        return self.label
 
     def _init_clusts(self):
 
@@ -624,17 +614,19 @@ class OfflineState(State):
         """
 
         if train:
-            self.graph = next(self._train_dataloader.__iter__())
+            self.graph, self.label = next(self._train_dataloader.__iter__())
+            self._reset()
             self._init_clusts()
 
             return self.state
 
         else:
-            self.graph = next(self._test_dataloader.__iter__())
+            self.graph, self.label = next(self._test_dataloader.__iter__())
+            self._reset()
             self._init_clusts()
             self._test_iter += 1
 
-            return self.state, self._test_iter == len(self._test_dataloader)
+            return self.state, self._test_iter >= len(self._test_dataloader)
 
 
 
