@@ -94,19 +94,13 @@ class SyntheticDataset(DGLDataset):
         self.labels = load_info(info_path)['labels']
         self._observation_space = load_info(info_path)['observation_space']
         self._state = load_info(info_path)['state']
+        self._n = len(self.graphs)
 
     def has_cache(self):
         # check whether there are processed data in `self.save_path`
         graph_path = os.path.join(self.save_path, self.name + '_dgl_graph.bin')
         info_path = os.path.join(self.save_path, self.name + '_info.pkl')
         return os.path.exists(graph_path) and os.path.exists(info_path)
-
-    @property
-    def defined(self):
-
-        if self._observation_space['n']:
-            return True
-        return False
 
     @property
     def shape(self):
