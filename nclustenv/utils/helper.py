@@ -59,14 +59,11 @@ def real_to_ind(x, param):
     return int(round(param * (len(x)-1), 0))
 
 
-def clusters_from_bool(graph, ntypes, hclusters=False):
+def clusters_from_bool(graph, ntypes):
 
     """Returns the clusters of a graph as a list of lists"""
 
-    if hclusters:
-        keys = [key for key in graph.nodes[ntypes[0]].data.keys() if isinstance(key, str)]
-    else:
-        keys = [key for key in graph.nodes[ntypes[0]].data.keys() if isinstance(key, int)]
+    keys = [key for key in graph.nodes[ntypes[0]].data.keys()]
 
     return [[[i
               for i, val in enumerate(graph.nodes[ntype].data[j]) if val]
