@@ -6,6 +6,8 @@ from nclustenv.utils.helper import matrix_to_string, index_to_matrix
 from gym import spaces
 import numpy as np
 
+from ...utils.datasets import SyntheticDataset
+
 
 class BiclusterEnv(BaseEnv):
 
@@ -25,7 +27,8 @@ class BiclusterEnv(BaseEnv):
             max_steps=200,
             error_margin=0.05,
             penalty=0.001,
-            init_state=True
+            init_state=True,
+            *args, **kwargs
     ):
 
         if shape is None:
@@ -44,7 +47,8 @@ class BiclusterEnv(BaseEnv):
             action=action,
             max_steps=max_steps,
             error_margin=error_margin,
-            penalty=penalty
+            penalty=penalty,
+            *args, **kwargs
         )
 
         if init_state:
@@ -62,7 +66,7 @@ class OfflineBiclusterEnv(BiclusterEnv):
 
     def __init__(
             self,
-            dataset,
+            dataset: SyntheticDataset,
             n=None,
             seed=None,
             metric='match_score',
@@ -70,20 +74,23 @@ class OfflineBiclusterEnv(BiclusterEnv):
             max_steps=200,
             error_margin=0.05,
             penalty=0.001,
-            train_test_split=0.8
+            train_test_split=0.8,
+            *args, **kwargs
     ):
+
         super(OfflineBiclusterEnv, self).__init__(
-            shape=None,
-            n=None,
-            clusters=None,
-            dataset_settings=None,
+            shape=dataset.shape,
+            n=n,
+            clusters=dataset.clusters,
+            dataset_settings=dataset.settings,
             seed=seed,
             metric=metric,
             action=action,
             max_steps=max_steps,
             error_margin=error_margin,
             penalty=penalty,
-            init_state=False
+            init_state=False,
+            *args, **kwargs
         )
 
         self.state = OfflineState(dataset=dataset, train_test_split=train_test_split, n=n, np_random=self.np_random)

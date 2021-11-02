@@ -36,7 +36,8 @@ class BaseEnv(gym.Env, ABC):
             action='Action',
             max_steps=200,
             error_margin=0.05,
-            penalty=0.001
+            penalty=0.001,
+            *args, **kwargs
     ):
 
         """
