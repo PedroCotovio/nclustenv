@@ -176,7 +176,7 @@ class StateTest(TestCaseBase):
             self.assertTrue(state._ntypes in [['row', 'col'], ['row', 'col', 'ctx']])
 
             # check cluster_coverage init
-            self.assertTrue(isinstance(state.cluster_coverage, list))
+            self.assertTrue(isinstance(state.cluster_coverage, np.ndarray))
 
     def test_shape(self):
 
@@ -219,6 +219,7 @@ class StateTest(TestCaseBase):
     def test_coverage(self):
 
         for state in self.states:
+
             self.assertEqual(state.coverage, state._generator.coverage)
 
     def test_current(self):
@@ -242,7 +243,6 @@ class StateTest(TestCaseBase):
     def test_dense(self):
 
         for state in self.states:
-
             self.assertTrue((state.as_dense == state._generator.X).all())
 
     def test_set_cluster_coverage(self):
