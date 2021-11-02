@@ -90,26 +90,29 @@ def parse_ds_settings(settings, enforced=None):
 
     keys = list(settings.keys())
 
-    # Enforce fixed settings
+    if keys != list(new_settings.keys()):
 
-    for key in list(enforced.keys()):
-        if key in keys:
-            keys.remove(key)
+        # Enforce fixed settings
 
-        new_settings['fixed'][key] = enforced[key]
+        for key in list(enforced.keys()):
+            if key in keys:
+                keys.remove(key)
 
-    for key in keys:
-        if settings[key].get('randomize', False):
-            if settings[key]['type'].lower() == 'categorical':
-                new_settings['discrete'][key] = settings[key]['value']
+            new_settings['fixed'][key] = enforced[key]
 
-            elif settings[key]['type'].lower() == 'continuous':
-                new_settings['continuous'][key] = settings[key]['value']
+        for key in keys:
+            if settings[key].get('randomize', False):
+                if settings[key]['type'].lower() == 'categorical':
+                    new_settings['discrete'][key] = settings[key]['value']
 
-        else:
-            new_settings['fixed'][key] = settings[key]['value']
+                elif settings[key]['type'].lower() == 'continuous':
+                    new_settings['continuous'][key] = settings[key]['value']
 
-    return new_settings
+            else:
+                new_settings['fixed'][key] = settings[key]['value']
+
+        return new_settings
+    return settings
 
 
 def retrive_skey(key: str, settings: dict, default=None):
