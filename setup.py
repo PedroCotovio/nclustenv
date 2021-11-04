@@ -35,6 +35,13 @@ setup(
         "Documentation": "https://nclustenv.readthedocs.org",
     },
     install_requires=[
+        'nclustgen>=1.0.2',
+        'gym>=0.18.3',
+        'dgl>=0.6.1',
+        'torch>=1.9.0',
+        'inquirer>=2.7',
+        'numpy',
+        'scipy'
 
     ],
     classifiers=[
