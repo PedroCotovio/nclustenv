@@ -1,16 +1,20 @@
 import abc
+import termios
 from abc import ABC
 from statistics import mean
 import numpy as np
+import inquirer
 
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
+from nclustenv.utils.spaces import DGLHeteroGraphSpace
+from scipy.optimize import linear_sum_assignment
 
-from ..utils import actions, metrics
-from ..utils.helper import loader
+from nclustenv.utils import actions, metrics
+from nclustenv.utils.helper import loader, parse_ds_settings, parse_bool_input
 
-# TODO test & docs
+
 class BaseEnv(gym.Env, ABC):
 
     """
@@ -24,14 +28,16 @@ class BaseEnv(gym.Env, ABC):
     def __init__(
             self,
             shape,
+            n=None,
             clusters=None,
             dataset_settings=None,
             seed=None,
-            metric='match_score_1_n',
+            metric='match_score',
             action='Action',
             max_steps=200,
             error_margin=0.05,
-            penalty=0.001
+            penalty=0.001,
+            *args, **kwargs
     ):
 
         """
@@ -41,16 +47,29 @@ class BaseEnv(gym.Env, ABC):
         shape: list, default [[100, 100, 2], [200, 200, 5]]
             List of length 2 where the first element is the minimum shape the observation space and the second is the
             maximum.
+        n: int, default None
+            Number of clusters to find, use None to train the undefined clusters tasks.
         clusters: [int], default [1, 1]
             List of length 2 where the first element is the minimum number of cluster to be hidden in the environment
             and the second is the maximum.
         dataset_settings: dict, default {}
             Dataset settings to be passed to generator.
 
+            **Format**: {parameter: {value: None, randomize: Bool}, type: {'Categorical', 'Continuous'}
+
+            If randomize is True, value should contain a list with the values to sample from or the range.
+
+            Examples
+            --------
+            >>> dataset_settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'categorical'},
+            >>> 'patterns': {'value': [['Order_Preserving', 'None'], ['None', 'Order_Preserving']], 'randomize': False,
+            >>> 'type': 'categorical'},
+            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'continuous'}
+            >>> }
+
             Note
             ----
-                Parameters `silence` and `in_memory` should not be set, and will be overwritten.
-
+                Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
         seed: int, default None
             Seed to initialize random object.
         metric: str or class, default 'match_score_1_n'.
@@ -61,7 +80,7 @@ class BaseEnv(gym.Env, ABC):
             ----------------------------
             name             task
             ================ ===========
-            match_score_1_n  single
+            match_score      Any
             ================ ===========
 
         action: str or class, default 'Action'.
@@ -105,25 +124,18 @@ class BaseEnv(gym.Env, ABC):
         if dataset_settings is None:
             dataset_settings = {}
 
-        # Enforce fixed settings
-        dataset_settings['silence'] = True
-        dataset_settings['in_memory'] = True
-
         self._clusters = clusters
-        self.dataset_settings = dataset_settings
+        self.dataset_settings = parse_ds_settings(dataset_settings)
 
         # metric pointer
-        self._metric = loader(metric)
+        self._metric = loader(metric, metrics)
 
         # action pointer
-        self._action = loader(action)
+        self._action = loader(action, actions)
 
         self.max_steps = max_steps
         self.target = error_margin
         self.penalty = penalty
-
-        self.action_space = None
-        self.observation_space = spaces.Box(low=np.array(shape[0]), high=np.array(shape[1]), dtype=np.int32)
 
         # Init
 
@@ -136,6 +148,24 @@ class BaseEnv(gym.Env, ABC):
         self.state = None
 
         self.seed(seed)
+
+        # spaces
+
+        self.action_space = spaces.Tuple((spaces.Discrete(4),
+                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
+
+        self.observation_space = spaces.Dict({
+            "action_mask": spaces.Box(0, 1, shape=(4,)),
+            "avail_actions": spaces.Box(0, 1, shape=(4,)),
+            "state": DGLHeteroGraphSpace(
+                shape=shape,
+                n=n,
+                clusters=clusters,
+                settings=self.dataset_settings,
+                np_random=self.np_random,
+                dtype=np.int32
+            )
+        })
 
     def seed(self, seed=None):
 
@@ -194,11 +224,11 @@ class BaseEnv(gym.Env, ABC):
             action_ = self._action(*action)
 
             # Take action
-            getattr(self.state, action_.action)(action_.ntype, action_.parameter)
+            getattr(self.state, action_.action)(action_.parameters)
 
             # calculate volume match
             self._last_distances.pop(0)
-            self._last_distances.append(1-self.volume_match)
+            self._last_distances.append(self.volume_match)
 
             # check state
 
@@ -226,7 +256,7 @@ class BaseEnv(gym.Env, ABC):
             self._steps_beyond_done += 1
             reward = 0.0
 
-        return self.state.current, reward, self._done, {}
+        return self.state.state, reward, self._done, {}
 
     def get_reward(self, last_distances, goal=False, error=False):
 
@@ -241,7 +271,11 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return float(last_distances[-2] - last_distances[-1] - self.penalty + (2 if goal else 0) - (1 if error else 0))
+        return float(
+            ((last_distances[-2] - last_distances[-1])
+             - self.penalty)
+            + ((2 if goal else 0) - (1 if error else 0))
+        )
 
     @property
     def volume_match(self):
@@ -257,13 +291,16 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        return min(self._metric(self.state.cluster, self.state.hclusters))
+        cost_matrix = self._metric(self.state.clusters, self.state.hclusters)
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+        return (cost_matrix[row_ind, col_ind] * self.state.cluster_coverage[col_ind]).sum()
 
     @property
     def best_match(self):
 
         """
-        Returns index of the hidden cluster with the best match for the current found cluster.
+        Returns index of the hidden clusters with the best match for the current found clusters.
 
         Returns
         -------
@@ -273,8 +310,7 @@ class BaseEnv(gym.Env, ABC):
 
         """
 
-        matches = self._metric(self.state.cluster, self.state.hclusters)
-        return matches.index(min(matches))
+        return linear_sum_assignment(self._metric(self.state.clusters, self.state.hclusters))
 
     def reset(self):
 
@@ -298,22 +334,7 @@ class BaseEnv(gym.Env, ABC):
         self._last_distances = [1.0, 1.0, 1.0]
         self._done = False
 
-        # reset seed
-        self.dataset_settings['seed'] = self.np_random.randint(low=1, high=10 ** 9, dtype=np.int32)
-
-        # define shape
-        try:
-            shape = self.np_random.randint(low=self.observation_space.low, high=self.observation_space.high)
-        except ValueError:
-            shape = self.observation_space.low
-
-        # define nclusters
-        try:
-            nclusters = self.np_random.randint(*self._clusters)
-        except ValueError:
-            nclusters = self._clusters[0]
-
-        return self.state.reset(shape=shape, nclusters=nclusters, settings=self.dataset_settings)
+        return self.state.reset(*self.observation_space['state'].sample())
 
     @abc.abstractmethod
     def _render(self, index):
@@ -358,18 +379,70 @@ class BaseEnv(gym.Env, ABC):
             The mode to render with.
         """
 
-        prefix = ''
-        if not self._done:
-            prefix = '(Current) '
+        if mode == 'human':
 
-        if 1 in (1 for ax in self.state.cluster if len(ax) > 0) and self.best_match is not None:
+            prefix = ''
+            if not self._done:
+                prefix = '(Current) '
 
-            print('{}Found cluster'.format(prefix))
-            self._render(self.state.cluster)
-            print('')
+            i = 1
 
-            print('{}Best matched hidden cluster [from {} hidden clusters]'.format(prefix, len(self.state.hclusters)))
-            self._render(self.state.hclusters[self.best_match])
+            clusters = self.state.clusters.copy()
+            hclusters = self.state.hclusters.copy()
 
-        else:
-            print('No cluster found yet..')
+            for row_ind, col_ind in zip(self.best_match[0], self.best_match[1]):
+
+                cluster = clusters.pop(row_ind)
+                hcluster = hclusters.pop(col_ind)
+
+                if 1 in (1 for ax in cluster if len(ax) > 0) and hcluster is not None:
+
+                    print('{}Hidden cluster {}'.format(prefix, i))
+                    self._render(hcluster)
+                    print('')
+
+                    print('{}Best matched found cluster'.format(prefix))
+                    self._render(cluster)
+
+                    i += 1
+
+            if i == 1:
+                print('No cluster found yet..')
+
+            else:
+                if len(clusters) > 0:
+                    unmatched = [clusters, 'Found']
+                elif len(hclusters) > 0:
+                    unmatched = [hclusters, 'Hidden']
+                else:
+                    unmatched = None
+
+                if unmatched:
+
+                    print('There are {} unmatched [{}] clusters'.format(len(unmatched[0]), unmatched[1]))
+
+                    try:
+                        confirm = {
+                            inquirer.Confirm('confirmed',
+                                             message="Do you want to render them",
+                                             default=True),
+                        }
+                        confirmation = inquirer.prompt(confirm)
+
+                        confirmed = confirmation["confirmed"]
+
+                    except termios.error:
+                        confirmation = input()
+                        confirmed = parse_bool_input(confirmation)
+
+                    if confirmed:
+                        print('Clusters possible to render:')
+                        print('')
+                        for i, c in enumerate(unmatched[0]):
+                            if 1 in (1 for ax in c if len(ax) > 0):
+                                print('Unmatched {}'.format(i))
+                                self._render(c)
+                                print('')
+
+
+

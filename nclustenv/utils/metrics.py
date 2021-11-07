@@ -1,3 +1,5 @@
+import numpy as np
+
 
 def IoU(x, y):
 
@@ -10,10 +12,10 @@ def IoU(x, y):
     return float(intersection) / union
 
 
-def match_score_1_n(fclust, hclusts):
+def match_score(fclusts, hclusts):
 
     """
-    For a given cluster `fclust` (found cluster), returns an IoU comparison against every element of `hclusts`
+    For any given cluster in `fclusts` (found clusters), returns the Jacquard distance of every element of `hclusts`
     (hidden clusters).
     """
-    return [IoU(fclust, y) for y in hclusts]
+    return np.array([[1-IoU(x, y) for y in hclusts] for x in fclusts])
