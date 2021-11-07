@@ -47,6 +47,8 @@ class BaseEnv(gym.Env, ABC):
         shape: list, default [[100, 100, 2], [200, 200, 5]]
             List of length 2 where the first element is the minimum shape the observation space and the second is the
             maximum.
+        n: int, default None
+            Number of clusters to find, use None to train the undefined clusters tasks.
         clusters: [int], default [1, 1]
             List of length 2 where the first element is the minimum number of cluster to be hidden in the environment
             and the second is the maximum.
@@ -65,11 +67,9 @@ class BaseEnv(gym.Env, ABC):
             >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'continuous'}
             >>> }
 
-
             Note
             ----
                 Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
-
         seed: int, default None
             Seed to initialize random object.
         metric: str or class, default 'match_score_1_n'.

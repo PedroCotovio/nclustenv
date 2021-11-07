@@ -13,6 +13,10 @@ from dgl.data.utils import save_info, load_info
 
 class SyntheticDataset(DGLDataset):
 
+    """
+    Implementation of a DGLDataset, that creates a synthetic dataset with a given number of examples.
+    """
+
     def __init__(
             self,
             length=10,
@@ -26,6 +30,56 @@ class SyntheticDataset(DGLDataset):
             verbose=False,
             *args, **kwargs
     ):
+        """
+        Parameters
+        ----------
+
+        length: int, default 10
+            Number of examples to be generated.
+        shape: list, default None
+            List of length 2 where the first element is the minimum shape the observation space and the second is the
+            maximum.
+        clusters: [int], default [1, 1]
+            List of length 2 where the first element is the minimum number of cluster to be hidden in the environment
+            and the second is the maximum.
+        dataset_settings: dict, default {}
+            Dataset settings to be passed to generator.
+
+            **Format**: {parameter: {value: None, randomize: Bool}, type: {'Categorical', 'Continuous'}
+
+            If randomize is True, value should contain a list with the values to sample from or the range.
+
+            Examples
+            --------
+            >>> dataset_settings = {'bkype': {'value': ['NORMAL', 'UNIFORM'], 'randomize': True, 'type': 'categorical'},
+            >>> 'patterns': {'value': [['Order_Preserving', 'None'], ['None', 'Order_Preserving']], 'randomize': False,
+            >>> 'type': 'categorical'},
+            >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'continuous'}
+            >>> }
+
+            Note
+            ----
+                Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
+        seed: int, default None
+            Seed to initialize random object.
+        generator: str or class, default BiclusterGenerator.
+            The name of a generator from the nclustgen tool, or the class for a personalised generator (not advised).
+        name: str, default synthetic
+            Name of the dataset.
+        save_dir: str, default None
+            Directory to save the processed dataset.
+        verbose: bool, default False
+            Whether to print out progress information.
+
+        Attributes
+        ----------
+
+        graphs: list
+            Dataset's Graphs.
+        labels: list
+            Dataset's Labels.
+
+        """
 
         if dataset_settings is None:
             dataset_settings = {}
@@ -104,14 +158,46 @@ class SyntheticDataset(DGLDataset):
 
     @property
     def shape(self):
+
+        """
+        Returns the dataset's shape bounds.
+
+        Returns
+        -------
+
+            list
+                Shape Bounds.
+        """
+
         return self._observation_space['shape']
 
     @property
     def clusters(self):
+
+        """
+        Returns the dataset's cluster bounds.
+
+        Returns
+        -------
+
+            list
+                Cluster Bounds.
+        """
         return self._observation_space['clusters']
 
     @property
     def settings(self):
+
+        """
+        Returns the dataset's settings.
+
+        Returns
+        -------
+
+            dict
+                Dataset's settings.
+        """
+
         return self._observation_space['settings']
 
     def __getitem__(self, i):

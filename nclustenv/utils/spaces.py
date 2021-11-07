@@ -48,7 +48,6 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             >>> 'mean': {'value': [1.0, 14.0], 'randomize': True, 'type': 'Continuous'}
             >>> }
 
-
             Note
             ----
                 Parameters `silence`, `in_memory` and `seed` should not be set, and will be overwritten.
@@ -102,6 +101,8 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             return low
 
     def _node_labels(self, labels):
+
+        """Returns node labels"""
 
         res = [ntypes for ntypes in labels]
         res.insert(0, res.pop())

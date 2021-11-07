@@ -74,6 +74,57 @@ class OfflineBiclusterEnv(BiclusterEnv):
             train_test_split=0.8,
             *args, **kwargs
     ):
+        """
+        Parameters
+        ----------
+
+        dataset: SyntheticDataset
+            DGLdataset to train on.
+        n: int, default None
+            Number of clusters to find, use None to train the undefined clusters tasks.
+        seed: int, default None
+            Seed to initialize random object.
+        metric: str or class, default 'match_score_1_n'.
+            The name of a metric implemented in `utils.metrics`, or a pointer for a personalised metric.
+
+            ================ ===========
+            Implemented metrics
+            ----------------------------
+            name             task
+            ================ ===========
+            match_score      Any
+            ================ ===========
+
+        action: str or class, default 'Action'.
+            The name of a action class implemented in `utils.actions`, or a pointer for a personalised action class.
+        max_steps: int, default 200
+            Maximum number of actions an agent can perform in a given environment.
+        error_margin: float, default 0.05
+            Margin of error for agent.
+        penalty: float, default 0.001
+            Penalty on reward per timestep (discount factor).
+
+        Attributes
+        ----------
+
+        dataset_settings: dict
+            Dataset settings to be passed to generator.
+        max_steps: int
+            Maximum number of actions an agent can perform in a given environment.
+        target: float
+            Target margin for agent.
+        penalty: float
+            Penalty on reward per timestep (discount factor).
+        action_space: gym space
+            Space from where the agent samples actions.
+        observation_space: gym space
+            Space from where the environment samples observations.
+        np_random: numpy random object
+            Random object.
+        state: state object
+            State object.
+
+        """
 
         super(OfflineBiclusterEnv, self).__init__(
             shape=dataset.shape,

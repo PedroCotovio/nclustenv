@@ -24,10 +24,8 @@ class State:
 
         generator: str or class, default BiclusterGenerator.
             The name of a generator from the nclustgen tool, or the class for a personalised generator (not advised).
-
         n: int, default None
             The number of clusters to find.
-
         np_random: pointer, default None
             Random State.
 
