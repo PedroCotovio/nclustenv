@@ -13,5 +13,5 @@ from gym import error
 from gym.core import Env, GoalEnv, Wrapper, ObservationWrapper, ActionWrapper, RewardWrapper
 from gym.envs import make, spec, register
 
-from nclustenv import environments
+from . import environments, datasets, configs, utils
 
