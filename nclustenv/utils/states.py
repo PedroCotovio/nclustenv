@@ -416,7 +416,7 @@ class State:
         # update cluster coverage
         self.cluster_coverage = self._set_cluster_coverage()
 
-    def reset(self, shape, nclusters, settings=None, **kwargs):
+    def reset(self, shape, nclusters, settings=None, clust_init='ones', **kwargs):
 
         """
         Resets the state (generates new state)
@@ -452,11 +452,11 @@ class State:
         self._generator.generate(*shape, nclusters=nclusters)
 
         if kwargs.get('not_init'):
-            self._generator.to_graph(framework='dgl', device='gpu', nclusters=0)
+            self._generator.to_graph(framework='dgl', device='gpu', nclusters=0, clust_init=clust_init)
         elif self.defined:
-            self._generator.to_graph(framework='dgl', device='gpu', nclusters=self.n)
+            self._generator.to_graph(framework='dgl', device='gpu', nclusters=self.n, clust_init=clust_init)
         else:
-            self._generator.to_graph(framework='dgl', device='gpu')
+            self._generator.to_graph(framework='dgl', device='gpu', clust_init=clust_init)
 
         self._reset()
 

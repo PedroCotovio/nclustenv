@@ -163,7 +163,8 @@ class BaseEnv(gym.Env, ABC):
                 clusters=clusters,
                 settings=self.dataset_settings,
                 np_random=self.np_random,
-                dtype=np.int32
+                dtype=np.int32,
+                **kwargs
             )
         })
 

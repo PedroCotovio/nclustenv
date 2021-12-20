@@ -19,6 +19,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             clusters=None,
             settings=None,
             np_random=None,
+            clust_init='ones',
             *args, **kwargs
 
     ):
@@ -72,6 +73,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         self.clusters = clusters
         self.settings = settings
         self._np_random = np_random
+        self.clust_init = clust_init
 
         super(DGLHeteroGraphSpace, self).__init__(
             low=np.array(shape[0]),
@@ -147,7 +149,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         for key, value in self.settings['continuous'].items():
             settings[key] = self._sample(low=value[0], high=value[1], discrete=False)
 
-        return shape, nclusters, settings
+        return shape, nclusters, settings, self.clust_init
 
     def contains(self, x: DGLHeteroGraph) -> bool:
 
