@@ -19,7 +19,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             clusters=None,
             settings=None,
             np_random=None,
-            clust_init='ones',
+            clust_init='zeros',
             *args, **kwargs
 
     ):

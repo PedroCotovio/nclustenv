@@ -416,7 +416,7 @@ class State:
         # update cluster coverage
         self.cluster_coverage = self._set_cluster_coverage()
 
-    def reset(self, shape, nclusters, settings=None, clust_init='ones', **kwargs):
+    def reset(self, shape, nclusters, settings=None, clust_init='zeros', **kwargs):
 
         """
         Resets the state (generates new state)
