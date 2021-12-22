@@ -1,7 +1,7 @@
 
 tric_base = {
     'shape': [[100, 10, 5], [100, 10, 5]],
-    'max_steps': 1000,
+    'max_steps': 5000,
 }
 
 tric_base_settings = {

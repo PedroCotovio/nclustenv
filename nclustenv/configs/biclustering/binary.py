@@ -12,5 +12,5 @@ base = {
                 'contiguity': dict(value=None),
                 'plaidcoherency': dict(value='NO_OVERLAPPING')
             },
-            'max_steps': 500,
+            'max_steps': 1000,
         }
