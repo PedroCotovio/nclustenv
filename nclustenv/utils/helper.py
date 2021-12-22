@@ -1,4 +1,5 @@
 import collections.abc
+import torch as th
 
 def index_to_matrix(x, index):
 
@@ -180,6 +181,10 @@ def inherit_config(parent, child, settings=None, drop=None):
         res['dataset_settings'].update(settings)
 
     return res
+
+
+def randint(size, dtype):
+    return th.randint(low=0, high=2, size=[size], dtype=dtype)
 
 
 
