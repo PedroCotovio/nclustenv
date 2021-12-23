@@ -218,8 +218,8 @@ class State:
             mask = np.array([add, remove, merge, True]).astype(int)
 
         return {
-            "action_mask": mask,
-            "avail_actions": np.ones(len(mask)),
+            "action_mask": mask.astype(np.float32),
+            "avail_actions": np.ones(len(mask), dtype=np.float32),
             "state": self.current
         }
 

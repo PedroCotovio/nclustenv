@@ -152,11 +152,11 @@ class BaseEnv(gym.Env, ABC):
         # spaces
 
         self.action_space = spaces.Tuple((spaces.Discrete(4),
-                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
+                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float32)))
 
         self.observation_space = spaces.Dict({
-            "action_mask": spaces.Box(0, 1, shape=(4,)),
-            "avail_actions": spaces.Box(0, 1, shape=(4,)),
+            "action_mask": spaces.Box(0, 1, shape=(4,), dtype=np.float32),
+            "avail_actions": spaces.Box(0, 1, shape=(4,), dtype=np.float32),
             "state": DGLHeteroGraphSpace(
                 shape=shape,
                 n=n,
