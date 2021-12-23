@@ -150,9 +150,13 @@ class BaseEnv(gym.Env, ABC):
         self.seed(seed)
 
         # spaces
+        _actions = 4
 
-        self.action_space = spaces.Tuple((spaces.Discrete(4),
-                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float32)))
+        self.action_space = spaces.Tuple((spaces.Discrete(_actions),
+                                          spaces.Tuple(
+                                              [spaces.Box(low=0.0, high=1.0, shape=(3,), dtype=np.float32)
+                                               for _ in range(_actions)]
+                                          )))
 
         self.observation_space = spaces.Dict({
             "action_mask": spaces.Box(0, 1, shape=(4,), dtype=np.float32),
