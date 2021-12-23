@@ -154,13 +154,19 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
     def contains(self, x: DGLHeteroGraph) -> bool:
 
         # Retrive shape
-        shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)])
+        shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)], dtype=self.dtype)
 
         # Check initialization
-        if self.n:
-            init = len(x.nodes[self._node_labels(x.ntypes)[0]].data) == self.n
+        if x.ndata['feat']:
+            check = x.ndata['feat'][self._node_labels(x.ntypes)[0]].shape[1]
+
         else:
-            init = True
+            check = len(x.nodes[self._node_labels(x.ntypes)[0]].data)
+
+        if self.n:
+            init = check == self.n
+        else:
+            init = check == 1
 
 
         # Verify settings
@@ -197,7 +203,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         return (
             isinstance(x, DGLHeteroGraph)
             and super(DGLHeteroGraphSpace, self).contains(shape)
-            and len(x.nodes[self._node_labels(x.ntypes)[0]]) == init
+            and init
             and settings
         )
 
