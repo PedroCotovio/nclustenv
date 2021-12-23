@@ -166,7 +166,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         if self.n:
             init = check == self.n
         else:
-            init = check == 1
+            init = check > 0
 
 
         # Verify settings
