@@ -153,6 +153,10 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
 
     def contains(self, x: DGLHeteroGraph) -> bool:
 
+        # Enforce CPU
+        if x.device.type != 'cpu':
+            x = x.to('cpu')
+
         # Retrive shape
         shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)], dtype=self.dtype)
 
@@ -167,7 +171,6 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             init = check == self.n
         else:
             init = check > 0
-
 
         # Verify settings
         if isinstance(x.edata['w'], dict):
