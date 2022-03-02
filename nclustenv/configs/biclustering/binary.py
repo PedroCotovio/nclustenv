@@ -1,5 +1,5 @@
 
-basic = {
+basic_v1 = {
             'shape': [[10, 10], [10, 10]],
             'n': 1,
             'clusters': [1, 1],
@@ -14,6 +14,9 @@ basic = {
             },
             'max_steps': 1000,
 }
+
+basic_v2 = basic_v1.copy()
+basic_v2['shape'] = [[8, 6], [8, 6]]
 
 base = {
             'shape': [[100, 10], [100, 10]],
