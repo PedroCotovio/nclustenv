@@ -31,6 +31,10 @@ basic_v2 = {
             'max_steps': 1000,
 }
 
+basic_v3 = basic_v2.copy()
+basic_v3['reward_shaping'] = 0.1
+
+
 base = {
             'shape': [[100, 10], [100, 10]],
             'n': 5,
