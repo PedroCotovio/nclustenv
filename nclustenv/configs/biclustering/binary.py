@@ -35,6 +35,9 @@ basic_v3 = basic_v2.copy()
 basic_v3['reward_shaping'] = 0.1
 basic_v3['max_steps'] = 50
 
+basic_v4 = basic_v3.copy()
+basic_v4['reward_shaping'] = 0.0
+
 
 base = {
             'shape': [[100, 10], [100, 10]],
