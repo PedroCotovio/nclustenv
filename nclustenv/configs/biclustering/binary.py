@@ -33,6 +33,7 @@ basic_v2 = {
 
 basic_v3 = basic_v2.copy()
 basic_v3['reward_shaping'] = 0.1
+basic_v3['max_steps'] = 50
 
 
 base = {
