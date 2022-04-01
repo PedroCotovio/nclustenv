@@ -1,3 +1,5 @@
+import collections.abc
+import torch as th
 
 def index_to_matrix(x, index):
 
@@ -152,6 +154,37 @@ def isListEmpty(x):
     if isinstance(x, list):
         return all(map(isListEmpty, x))
     return False
+
+
+def _inherit_dict(parent, child):
+
+    res = parent.copy()
+    res.update(child)
+
+    return res
+
+
+def inherit_config(parent, child, settings=None, drop=None):
+
+    res = parent.copy()
+    res.update(child)
+    if drop:
+
+        drop = list(drop)
+
+        for key in drop:
+            res.pop(key, None)
+
+    if settings:
+
+        res['dataset_settings'] = res['dataset_settings'].copy()
+        res['dataset_settings'].update(settings)
+
+    return res
+
+
+def randint(size, dtype):
+    return th.randint(low=0, high=2, size=[size], dtype=dtype)
 
 
 

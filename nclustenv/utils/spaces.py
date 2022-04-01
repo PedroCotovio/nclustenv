@@ -19,6 +19,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
             clusters=None,
             settings=None,
             np_random=None,
+            clust_init='zeros',
             *args, **kwargs
 
     ):
@@ -72,6 +73,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         self.clusters = clusters
         self.settings = settings
         self._np_random = np_random
+        self.clust_init = clust_init
 
         super(DGLHeteroGraphSpace, self).__init__(
             low=np.array(shape[0]),
@@ -147,19 +149,28 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         for key, value in self.settings['continuous'].items():
             settings[key] = self._sample(low=value[0], high=value[1], discrete=False)
 
-        return shape, nclusters, settings
+        return shape, nclusters, settings, self.clust_init
 
     def contains(self, x: DGLHeteroGraph) -> bool:
 
+        # Enforce CPU
+        if x.device.type != 'cpu':
+            x = x.to('cpu')
+
         # Retrive shape
-        shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)])
+        shape = np.array([x.nodes(ntype).shape[0] for ntype in self._node_labels(x.ntypes)], dtype=self.dtype)
 
         # Check initialization
-        if self.n:
-            init = len(x.nodes[self._node_labels(x.ntypes)[0]].data) == self.n
-        else:
-            init = True
+        if x.ndata['feat']:
+            check = x.ndata['feat'][self._node_labels(x.ntypes)[0]].shape[1]
 
+        else:
+            check = len(x.nodes[self._node_labels(x.ntypes)[0]].data)
+
+        if self.n:
+            init = check == self.n
+        else:
+            init = check > 0
 
         # Verify settings
         if isinstance(x.edata['w'], dict):
@@ -195,7 +206,7 @@ class DGLHeteroGraphSpace(gym.spaces.Box):
         return (
             isinstance(x, DGLHeteroGraph)
             and super(DGLHeteroGraphSpace, self).contains(shape)
-            and len(x.nodes[self._node_labels(x.ntypes)[0]]) == init
+            and init
             and settings
         )
 

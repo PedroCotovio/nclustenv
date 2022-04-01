@@ -1,4 +1,6 @@
 
+from .classic_lr import BiclusterEnv, OfflineBiclusterEnv, TriclusterEnv, OfflineTriclusterEnv
+
 from gym.envs import register
 
 # Online Environments

@@ -37,6 +37,7 @@ class BaseEnv(gym.Env, ABC):
             max_steps=200,
             error_margin=0.05,
             penalty=0.001,
+            reward_shaping=1.0,
             *args, **kwargs
     ):
 
@@ -91,6 +92,8 @@ class BaseEnv(gym.Env, ABC):
             Margin of error for agent.
         penalty: float, default 0.001
             Penalty on reward per timestep (discount factor).
+        reward_shaping: float, default 1.0
+            Percentage of shaping used in reward.
 
         Attributes
         ----------
@@ -133,6 +136,9 @@ class BaseEnv(gym.Env, ABC):
         # action pointer
         self._action = loader(action, actions)
 
+        # reward shaping
+        self._reward_shaping = float(max(reward_shaping, 0.0))
+
         self.max_steps = max_steps
         self.target = error_margin
         self.penalty = penalty
@@ -150,20 +156,25 @@ class BaseEnv(gym.Env, ABC):
         self.seed(seed)
 
         # spaces
+        _actions = 4
 
-        self.action_space = spaces.Tuple((spaces.Discrete(4),
-                                          spaces.Box(low=0.0, high=1.0, shape=[4, 3], dtype=np.float16)))
+        self.action_space = spaces.Tuple((spaces.Discrete(_actions),
+                                          spaces.Tuple(
+                                              [spaces.Box(low=0.0, high=1.0, shape=(3,), dtype=np.float32)
+                                               for _ in range(_actions)]
+                                          )))
 
         self.observation_space = spaces.Dict({
-            "action_mask": spaces.Box(0, 1, shape=(4,)),
-            "avail_actions": spaces.Box(0, 1, shape=(4,)),
+            "action_mask": spaces.Box(0, 1, shape=(4,), dtype=np.float32),
+            "avail_actions": spaces.Box(0, 1, shape=(4,), dtype=np.float32),
             "state": DGLHeteroGraphSpace(
                 shape=shape,
                 n=n,
                 clusters=clusters,
                 settings=self.dataset_settings,
                 np_random=self.np_random,
-                dtype=np.int32
+                dtype=np.int32,
+                **kwargs
             )
         })
 
@@ -239,7 +250,7 @@ class BaseEnv(gym.Env, ABC):
                 reward = self.get_reward(self._last_distances, True, True)
                 self._done = True
             elif self._current_step > self.max_steps:
-                reward = -1.0
+                reward = -1.0 * self._reward_shaping
                 self._done = True
             else:
                 reward = self.get_reward(self._last_distances)
@@ -274,7 +285,7 @@ class BaseEnv(gym.Env, ABC):
         return float(
             ((last_distances[-2] - last_distances[-1])
              - self.penalty)
-            + ((2 if goal else 0) - (1 if error else 0))
+            + (((2 * self._reward_shaping) if goal else 0) - ((1 * self._reward_shaping) if error else 0))
         )
 
     @property
