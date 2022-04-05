@@ -26,13 +26,12 @@ setup(
     author="Pedro Cotovio",
     author_email="pgcotovio@gmail.com",
     license=license,
-    description="Gym environment to learn biclustering and triclustering task using RL",
+    description="Gym environments to learn biclustering and triclustering tasks using reinforcement learning.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/PedroCotovio/nclustenv",
     project_urls={
         "Bug Tracker": "https://github.com/PedroCotovio/nclustenv/issues",
-        "Documentation": "https://nclustenv.readthedocs.org",
     },
     install_requires=[
         'nclustgen>=1.0.3',
